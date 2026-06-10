@@ -27,6 +27,7 @@ interface Props {
 
 export default function LoginBottomSheet({isOpen, onClose, onSuccess}: Props) {
   const {t} = useTranslation();
+  const {t: tDemo} = useTranslation('demo');
   const {login, isLoading} = useAuthStore();
   const {isActive, currentStep, nextStep} = useDemoStore();
 
@@ -275,15 +276,15 @@ export default function LoginBottomSheet({isOpen, onClose, onSuccess}: Props) {
     <DemoTooltip
       visible={isActive && currentStep === 'login_phone'}
       stepNumber={7} totalSteps={18}
-      title="Step 6: Secure Login"
-      description="EJJAR uses phone OTP authentication. No passwords needed. The contractor enters their Oman mobile number to receive a verification code."
+      title={tDemo('tour.login_phone.title')}
+      description={tDemo('tour.login_phone.description')}
       onNext={nextStep}
     />
     <DemoTooltip
       visible={isActive && currentStep === 'login_otp'}
       stepNumber={8} totalSteps={18}
-      title="Step 7: Verify Identity"
-      description="6-digit OTP sent via SMS. Once verified, contractor identity is established and they can submit RFQs."
+      title={tDemo('tour.login_otp.title')}
+      description={tDemo('tour.login_otp.description')}
       onNext={() => {
         nextStep();
         onSuccess();

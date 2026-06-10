@@ -223,6 +223,7 @@ function ErrorText({msg}: {msg: string}) {
 
 export default function RFQFormScreen() {
   const {t, i18n} = useTranslation();
+  const {t: tDemo} = useTranslation('demo');
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
@@ -916,15 +917,15 @@ export default function RFQFormScreen() {
       <DemoTooltip
         visible={isActive && currentStep === 'rfq_form'}
         stepNumber={9} totalSteps={18}
-        title="Step 8: Fill RFQ Details"
-        description="Contractor enters project requirements: dates, quantity, specifications, attachments, and digital signature. All bilingual EN/AR."
+        title={tDemo('tour.rfq_form.title')}
+        description={tDemo('tour.rfq_form.description')}
         onNext={nextStep}
       />
       <DemoTooltip
         visible={isActive && currentStep === 'rfq_submitted'}
         stepNumber={10} totalSteps={18}
-        title="Step 9: Broadcast Complete"
-        description="RFQ is broadcast to all matching suppliers simultaneously. Each supplier receives an instant notification in their portal."
+        title={tDemo('tour.rfq_submitted.title')}
+        description={tDemo('tour.rfq_submitted.description')}
         onNext={() => {
           nextStep();
           navigation.navigate('RFQDetail', {rfqId: 'rfq-002'});

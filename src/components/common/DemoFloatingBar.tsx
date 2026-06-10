@@ -1,10 +1,12 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import Icon from '@react-native-vector-icons/material-design-icons';
+import { useTranslation } from 'react-i18next';
 import { useDemoStore } from '../../store/demoStore';
 
 export default function DemoFloatingBar() {
   const { isActive, exitDemo } = useDemoStore();
+  const { t } = useTranslation('demo');
 
   if (!isActive) return null;
 
@@ -29,7 +31,7 @@ export default function DemoFloatingBar() {
       }}
     >
       <Icon name="play-circle" size={16} color="white" />
-      <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700', marginLeft: 4 }}>DEMO MODE</Text>
+      <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700', marginLeft: 4 }}>{t('tour.ui.modeLabel')}</Text>
       <TouchableOpacity onPress={exitDemo} style={{ marginLeft: 8 }}>
         <Icon name="close-circle" size={18} color="white" />
       </TouchableOpacity>

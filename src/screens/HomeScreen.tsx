@@ -304,6 +304,7 @@ function CategoryCard({
 
 export default function HomeScreen() {
   const {t, i18n} = useTranslation();
+  const {t: tDemo} = useTranslation('demo');
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const {unreadCount, recentSearches, addRecentSearch} = useAppStore();
@@ -941,29 +942,29 @@ export default function HomeScreen() {
       <DemoTooltip
         visible={isActive && currentStep === 'home'}
         stepNumber={1} totalSteps={18}
-        title="Welcome to EJJAR Tour"
-        description="EJJAR connects contractors with verified suppliers across Oman. Let me show you the complete flow. We will simulate a contractor looking for excavators in Muscat."
+        title={tDemo('tour.home.title')}
+        description={tDemo('tour.home.description')}
         onNext={nextStep}
       />
       <DemoTooltip
         visible={isActive && currentStep === 'select_category'}
         stepNumber={2} totalSteps={18}
-        title="Step 1: Choose Category"
-        description="Three categories available: Manpower (workers), Machinery & Vehicles (equipment), and Shipping (cargo). For this demo we will choose Machinery."
+        title={tDemo('tour.select_category.title')}
+        description={tDemo('tour.select_category.description')}
         onNext={nextStep}
       />
       <DemoTooltip
         visible={isActive && currentStep === 'select_location'}
         stepNumber={3} totalSteps={18}
-        title="Step 2: Select Location"
-        description="The contractor selects their project location. EJJAR matches RFQs to suppliers in the same city. We will use Oman → Muscat."
+        title={tDemo('tour.select_location.title')}
+        description={tDemo('tour.select_location.description')}
         onNext={nextStep}
       />
       <DemoTooltip
         visible={isActive && currentStep === 'tap_search'}
         stepNumber={4} totalSteps={18}
-        title="Step 3: Find Suppliers"
-        description="Tap Search to find verified suppliers matching the criteria. EJJAR shows all available, verified suppliers in the region."
+        title={tDemo('tour.tap_search.title')}
+        description={tDemo('tour.tap_search.description')}
         onNext={() => {
           nextStep();
           navigation.navigate('SearchResults', {category: 'machinery', params: {country: 'Oman', city: 'Muscat'}});

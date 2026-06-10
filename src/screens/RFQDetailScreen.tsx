@@ -41,6 +41,7 @@ const STATUS_STEP: Record<string, number> = {
 
 export default function RFQDetailScreen() {
   const {t, i18n} = useTranslation();
+  const {t: tDemo} = useTranslation('demo');
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
@@ -448,29 +449,29 @@ export default function RFQDetailScreen() {
       <DemoTooltip
         visible={isActive && demoStep === 'rfq_new'}
         stepNumber={11} totalSteps={18}
-        title="Step 10: Waiting Stage"
-        description="RFQ status: NEW. The system is now waiting for suppliers to respond with their quotes. Notice the status stepper at the top showing progress."
+        title={tDemo('tour.rfq_new.title')}
+        description={tDemo('tour.rfq_new.description')}
         onNext={demoNext}
       />
       <DemoTooltip
         visible={isActive && demoStep === 'rfq_quotes_received'}
         stepNumber={12} totalSteps={18}
-        title="Step 11: Quotes Received"
-        description="Two suppliers responded with competitive quotes. Contractor can compare quote amount, allocated resources, and supplier ratings."
+        title={tDemo('tour.rfq_quotes_received.title')}
+        description={tDemo('tour.rfq_quotes_received.description')}
         onNext={demoNext}
       />
       <DemoTooltip
         visible={isActive && demoStep === 'rfq_accept_quote'}
         stepNumber={13} totalSteps={18}
-        title="Step 12: Accept Best Quote"
-        description="Contractor accepts the best offer. Other suppliers are notified that they were not selected. EJJAR maintains transparency throughout."
+        title={tDemo('tour.rfq_accept_quote.title')}
+        description={tDemo('tour.rfq_accept_quote.description')}
         onNext={demoNext}
       />
       <DemoTooltip
         visible={isActive && demoStep === 'rfq_confirmed'}
         stepNumber={14} totalSteps={18}
-        title="Step 13: Job Confirmed"
-        description="Once both parties confirm, contact details are unmasked. The contractor now sees the supplier's real name and phone number. Job creation begins."
+        title={tDemo('tour.rfq_confirmed.title')}
+        description={tDemo('tour.rfq_confirmed.description')}
         onNext={() => {
           demoNext();
           navigation.navigate('JobTracking', {jobId: 'job-001'});

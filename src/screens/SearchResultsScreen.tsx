@@ -87,6 +87,7 @@ function SkeletonCard() {
 
 export default function SearchResultsScreen() {
   const {t} = useTranslation();
+  const {t: tDemo} = useTranslation('demo');
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
@@ -289,8 +290,8 @@ export default function SearchResultsScreen() {
           <View style={{flexDirection: 'row', alignItems: 'flex-start'}}>
             <CategoryIcon category={category} size={26} withBackground />
             <View style={{flex: 1, marginHorizontal: 12}}>
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-                <Text style={{fontSize: 15, fontWeight: '700', color: colors.textPrimary}} numberOfLines={1}>
+              <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'nowrap'}}>
+                <Text style={{fontSize: 15, fontWeight: '700', color: colors.textPrimary, flexShrink: 1}} numberOfLines={1}>
                   {getLocalizedField(item, 'company')}
                 </Text>
                 {item.verified && <VerifiedBadge />}
@@ -557,15 +558,15 @@ export default function SearchResultsScreen() {
       <DemoTooltip
         visible={isActive && currentStep === 'search_results'}
         stepNumber={5} totalSteps={18}
-        title="Step 4: Verified Suppliers"
-        description="EJJAR shows verified suppliers with ratings, response time, fleet size, and availability. Notice the Platinum tier badges for top-rated suppliers."
+        title={tDemo('tour.search_results.title')}
+        description={tDemo('tour.search_results.description')}
         onNext={nextStep}
       />
       <DemoTooltip
         visible={isActive && currentStep === 'tap_submit_rfq'}
         stepNumber={6} totalSteps={18}
-        title="Step 5: Broadcast RFQ"
-        description="Instead of contacting suppliers one by one, the contractor broadcasts ONE RFQ to ALL matching suppliers at once. This is EJJAR's key innovation."
+        title={tDemo('tour.tap_submit_rfq.title')}
+        description={tDemo('tour.tap_submit_rfq.description')}
         onNext={() => {
           nextStep();
           setLoginOpen(true);

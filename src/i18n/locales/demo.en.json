@@ -86,5 +86,79 @@
     "jobCompleted": "Job completed",
     "searchingResources": "Searching resources...",
     "broadcastingToSuppliers": "Broadcasting to suppliers..."
+  },
+  "tour": {
+    "ui": {
+      "label": "DEMO TOUR",
+      "modeLabel": "DEMO MODE",
+      "stepOf": "Step {{current}} of {{total}}",
+      "exitTour": "Exit Tour",
+      "next": "Next",
+      "finish": "Finish"
+    },
+    "home": {
+      "title": "Welcome to EJJAR Tour",
+      "description": "EJJAR connects contractors with verified suppliers across Oman. Let me show you the complete flow. We will simulate a contractor looking for excavators in Muscat."
+    },
+    "select_category": {
+      "title": "Step 1: Choose Category",
+      "description": "Three categories available: Manpower (workers), Machinery & Vehicles (equipment), and Shipping (cargo). For this demo we will choose Machinery."
+    },
+    "select_location": {
+      "title": "Step 2: Select Location",
+      "description": "The contractor selects their project location. EJJAR matches RFQs to suppliers in the same city. We will use Oman → Muscat."
+    },
+    "tap_search": {
+      "title": "Step 3: Find Suppliers",
+      "description": "Tap Search to find verified suppliers matching the criteria. EJJAR shows all available, verified suppliers in the region."
+    },
+    "search_results": {
+      "title": "Step 4: Verified Suppliers",
+      "description": "EJJAR shows verified suppliers with ratings, response time, fleet size, and availability. Notice the Platinum tier badges for top-rated suppliers."
+    },
+    "tap_submit_rfq": {
+      "title": "Step 5: Broadcast RFQ",
+      "description": "Instead of contacting suppliers one by one, the contractor broadcasts ONE RFQ to ALL matching suppliers at once. This is EJJAR's key innovation."
+    },
+    "login_phone": {
+      "title": "Step 6: Secure Login",
+      "description": "EJJAR uses phone OTP authentication. No passwords needed. The contractor enters their Oman mobile number to receive a verification code."
+    },
+    "login_otp": {
+      "title": "Step 7: Verify Identity",
+      "description": "6-digit OTP sent via SMS. Once verified, contractor identity is established and they can submit RFQs."
+    },
+    "rfq_form": {
+      "title": "Step 8: Fill RFQ Details",
+      "description": "Contractor enters project requirements: dates, quantity, specifications, attachments, and digital signature. All bilingual EN/AR."
+    },
+    "rfq_submitted": {
+      "title": "Step 9: Broadcast Complete",
+      "description": "RFQ is broadcast to all matching suppliers simultaneously. Each supplier receives an instant notification in their portal."
+    },
+    "rfq_new": {
+      "title": "Step 10: Waiting Stage",
+      "description": "RFQ status: NEW. The system is now waiting for suppliers to respond with their quotes. Notice the status stepper at the top showing progress."
+    },
+    "rfq_quotes_received": {
+      "title": "Step 11: Quotes Received",
+      "description": "Two suppliers responded with competitive quotes. Contractor can compare quote amount, allocated resources, and supplier ratings."
+    },
+    "rfq_accept_quote": {
+      "title": "Step 12: Accept Best Quote",
+      "description": "Contractor accepts the best offer. Other suppliers are notified that they were not selected. EJJAR maintains transparency throughout."
+    },
+    "rfq_confirmed": {
+      "title": "Step 13: Job Confirmed",
+      "description": "Once both parties confirm, contact details are unmasked. The contractor now sees the supplier's real name and phone number. Job creation begins."
+    },
+    "review_screen": {
+      "title": "Step 16: Leave Review",
+      "description": "Contractor rates the supplier 1–5 stars with comments and photos. Reviews are public and help future contractors choose reliable suppliers."
+    },
+    "review_submitted": {
+      "title": "Tour Complete!",
+      "description": "That's the complete EJJAR flow: Search → Broadcast → Compare → Accept → Track → Complete → Review. All in one platform, fully bilingual, across Oman."
+    }
   }
 }

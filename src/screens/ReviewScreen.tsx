@@ -54,6 +54,7 @@ const TAGS = [
 
 export default function ReviewScreen() {
   const {t} = useTranslation();
+  const {t: tDemo} = useTranslation('demo');
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
@@ -330,15 +331,15 @@ export default function ReviewScreen() {
       <DemoTooltip
         visible={isActive && currentStep === 'review_screen'}
         stepNumber={17} totalSteps={18}
-        title="Step 16: Leave Review"
-        description="Contractor rates the supplier 1–5 stars with comments and photos. Reviews are public and help future contractors choose reliable suppliers."
+        title={tDemo('tour.review_screen.title')}
+        description={tDemo('tour.review_screen.description')}
         onNext={nextStep}
       />
       <DemoTooltip
         visible={isActive && currentStep === 'review_submitted'}
         stepNumber={18} totalSteps={18}
-        title="Tour Complete!"
-        description="That's the complete EJJAR flow: Search → Broadcast → Compare → Accept → Track → Complete → Review. All in one platform, fully bilingual, across Oman."
+        title={tDemo('tour.review_submitted.title')}
+        description={tDemo('tour.review_submitted.description')}
         onNext={() => {
           useDemoStore.getState().exitDemo();
           navigation.navigate('Home' as never);

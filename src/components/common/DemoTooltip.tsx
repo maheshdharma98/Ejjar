@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Modal } from 'react-native';
 import Icon from '@react-native-vector-icons/material-design-icons';
+import { useTranslation } from 'react-i18next';
 import { useDemoStore } from '../../store/demoStore';
 
 type Props = {
@@ -22,6 +23,7 @@ export default function DemoTooltip({
   onNext,
 }: Props) {
   const exitDemo = useDemoStore(s => s.exitDemo);
+  const { t } = useTranslation('demo');
 
   if (!visible) return null;
 
@@ -36,9 +38,9 @@ export default function DemoTooltip({
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#EBF1FF', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4 }}>
               <Icon name="play-circle" size={16} color="#192433" />
-              <Text style={{ fontSize: 11, fontWeight: '700', color: '#192433', marginLeft: 4 }}>DEMO TOUR</Text>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: '#192433', marginLeft: 4 }}>{t('tour.ui.label')}</Text>
             </View>
-            <Text style={{ fontSize: 12, color: '#6B7280' }}>Step {stepNumber} of {totalSteps}</Text>
+            <Text style={{ fontSize: 12, color: '#6B7280' }}>{t('tour.ui.stepOf', { current: stepNumber, total: totalSteps })}</Text>
           </View>
 
           {/* Progress bar */}
@@ -58,7 +60,7 @@ export default function DemoTooltip({
               onPress={exitDemo}
               style={{ paddingHorizontal: 20, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: '#E5E7EB' }}
             >
-              <Text style={{ fontSize: 14, color: '#4B5563', fontWeight: '600' }}>Exit Tour</Text>
+              <Text style={{ fontSize: 14, color: '#4B5563', fontWeight: '600' }}>{t('tour.ui.exitTour')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={onNext}
@@ -69,7 +71,7 @@ export default function DemoTooltip({
               }}
             >
               <Text style={{ color: '#fff', fontWeight: '700', marginRight: 4 }}>
-                {stepNumber === totalSteps ? 'Finish' : 'Next'}
+                {stepNumber === totalSteps ? t('tour.ui.finish') : t('tour.ui.next')}
               </Text>
               <Icon name="arrow-right" size={18} color="white" />
             </TouchableOpacity>
