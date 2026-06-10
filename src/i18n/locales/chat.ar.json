@@ -1,0 +1,32 @@
+{
+  "greetings": {
+    "hello": "السلام عليكم",
+    "thanks": "مشكور",
+    "welcome": "حياك الله",
+    "noProblem": "ما عليه أمر"
+  },
+  "negotiation": {
+    "canYouLowerPrice": "ممكن تنزل بالسعر شوي؟",
+    "thisIsMyBestPrice": "هذا أحسن سعر عندنا والله",
+    "deal": "اتفقنا",
+    "letMeThink": "خليني أفكر فيها",
+    "okAccept": "زين، قبلت",
+    "tooExpensive": "السعر غالي شوي",
+    "fairPrice": "السعر مناسب",
+    "iWillCallYou": "بأتصل فيك",
+    "callMeBack": "اتصل فيي",
+    "whenCanYouStart": "متى تقدر تبدأ؟",
+    "iCanStartTomorrow": "أقدر أبدأ باكر",
+    "tooLate": "متأخر علينا",
+    "perfect": "تمام",
+    "letsDoIt": "يلا نسوي"
+  },
+  "common": {
+    "yes": "إي",
+    "no": "لا",
+    "ok": "تمام",
+    "good": "زين",
+    "fine": "ماشي الحال",
+    "later": "بعدين"
+  }
+}

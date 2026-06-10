@@ -22,7 +22,7 @@ export default function FocusInput({label, error, style, ...rest}: Props) {
       <TextInput
         className="bg-white rounded-xl h-[48px] px-4 text-[#1A1A2E] text-base"
         style={[
-          {borderWidth: 1.5, borderColor: error ? '#EF4444' : focused ? '#1A4FBA' : '#E5E7EB'},
+          {borderWidth: 1.5, borderColor: error ? '#EF4444' : focused ? '#192433' : '#E5E7EB'},
           style,
         ]}
         onFocus={() => setFocused(true)}

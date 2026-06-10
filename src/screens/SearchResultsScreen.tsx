@@ -13,12 +13,26 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {RouteProp} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
+import Icon from '../components/common/Icon';
 
 import type {RootStackParamList} from '../navigation/RootNavigator';
+import {useDemoStore} from '../store/demoStore';
+import DemoTooltip from '../components/common/DemoTooltip';
+import DemoFloatingBar from '../components/common/DemoFloatingBar';
 import type {Supplier} from '../types';
 import {useAuthStore} from '../store/authStore';
 import {maskSupplierName} from '../utils/masking';
 import LoginBottomSheet from '../components/common/LoginBottomSheet';
+import {colors, shadows} from '../theme/designSystem';
+import {categoryColors} from '../utils/iconMap';
+import CategoryIcon from '../components/common/CategoryIcon';
+import StatusBadge from '../components/common/StatusBadge';
+import StarRating from '../components/common/StarRating';
+import VerifiedBadge from '../components/common/VerifiedBadge';
+import PremiumButton from '../components/common/PremiumButton';
+import {useDemoData} from '../store/demoDataStore';
+import {formatCurrency, getLocalizedField} from '../utils/arabicFormatters';
+import type {Subcategory, Supplier as DemoSupplier} from '../../../shared/types/demo';
 
 const suppliersData: Supplier[] = require('../../../shared/mock/suppliers.json');
 
@@ -27,30 +41,16 @@ type Route = RouteProp<RootStackParamList, 'SearchResults'>;
 
 type SortKey = 'bestMatch' | 'nearest' | 'rating' | 'availability';
 
-const SORT_OPTIONS: {key: SortKey; labelKey: string}[] = [
-  {key: 'bestMatch', labelKey: 'search.sortBestMatch'},
-  {key: 'nearest', labelKey: 'search.sortNearest'},
-  {key: 'rating', labelKey: 'search.sortRating'},
-  {key: 'availability', labelKey: 'search.sortAvailability'},
+const SORT_OPTIONS: {key: SortKey; labelKey: string; icon: string}[] = [
+  {key: 'bestMatch', labelKey: 'search.sortBestMatch', icon: 'auto-fix'},
+  {key: 'nearest', labelKey: 'search.sortNearest', icon: 'map-marker-radius'},
+  {key: 'rating', labelKey: 'search.sortRating', icon: 'star'},
+  {key: 'availability', labelKey: 'search.sortAvailability', icon: 'lightning-bolt'},
 ];
 
-const CATEGORY_ICON: Record<string, {emoji: string; bg: string}> = {
-  manpower:  {emoji: '👷', bg: '#E8EEFB'},
-  machinery: {emoji: '🏗️', bg: '#FEF3C7'},
-  vehicles:  {emoji: '🚛', bg: '#F0FFF4'},
-  shipping:  {emoji: '📦', bg: '#F0F9FF'},
-};
-
-const CATEGORY_ACCENT: Record<string, string> = {
-  manpower: '#1A4FBA',
-  machinery: '#F59E0B',
-  vehicles: '#22C55E',
-  shipping: '#8B5CF6',
-};
-
 const TIER_STYLE: Record<string, {bg: string; color: string; label: string}> = {
-  basic:    {bg: '#F3F4F6', color: '#6B7280', label: 'Basic'},
-  pro:      {bg: '#E8EEFB', color: '#1A4FBA', label: 'Pro'},
+  basic:    {bg: '#F1F5F9', color: '#64748B', label: 'Basic'},
+  pro:      {bg: '#E8EDF2', color: '#192433', label: 'Pro'},
   platinum: {bg: '#FEF3C7', color: '#D97706', label: 'Platinum'},
 };
 
@@ -58,44 +58,25 @@ const TIER_STYLE: Record<string, {bg: string; color: string; label: string}> = {
 // Sub-components
 // ---------------------------------------------------------------------------
 
-function StarRating({rating}: {rating: number}) {
-  return (
-    <View className="flex-row gap-0.5">
-      {[1, 2, 3, 4, 5].map(star => (
-        <Text
-          key={star}
-          className={`text-sm ${star <= Math.round(rating) ? 'text-[#F59E0B]' : 'text-[#E5E7EB]'}`}
-        >
-          ★
-        </Text>
-      ))}
-    </View>
-  );
-}
-
 function SkeletonCard() {
-  const bg = '#E5E7EB';
+  const bg = '#E2E8F0';
   return (
-    <View className="bg-white rounded-2xl shadow-sm mb-3 p-4">
-      <View className="flex-row items-center">
-        <View style={{width: 48, height: 48, borderRadius: 12, backgroundColor: bg}} />
-        <View className="flex-1 ms-3">
+    <View style={[{backgroundColor: colors.card, borderRadius: 16, marginBottom: 12, padding: 16}, shadows.sm]}>
+      <View style={{flexDirection: 'row', alignItems: 'center'}}>
+        <View style={{width: 56, height: 56, borderRadius: 12, backgroundColor: bg}} />
+        <View style={{flex: 1, marginLeft: 12}}>
           <View style={{width: '60%', height: 14, borderRadius: 4, backgroundColor: bg}} />
           <View style={{width: '40%', height: 11, borderRadius: 4, backgroundColor: bg, marginTop: 6}} />
         </View>
       </View>
-      <View style={{width: '45%', height: 12, borderRadius: 4, backgroundColor: bg, marginTop: 14}} />
-      <View style={{width: '30%', height: 22, borderRadius: 11, backgroundColor: bg, marginTop: 10}} />
       <View style={{height: 1, backgroundColor: bg, marginTop: 14, marginBottom: 14}} />
-      <View style={{width: '100%', height: 38, borderRadius: 12, backgroundColor: bg}} />
-    </View>
-  );
-}
-
-function AvailabilityBadge({t}: {t: (k: string) => string}) {
-  return (
-    <View className="bg-[#DCFCE7] rounded-full px-3 py-1 self-start">
-      <Text className="text-[#15803D] text-xs font-medium">{t('common.available')}</Text>
+      <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
+        <View style={{width: 56, height: 32, borderRadius: 8, backgroundColor: bg}} />
+        <View style={{width: 56, height: 32, borderRadius: 8, backgroundColor: bg}} />
+        <View style={{width: 56, height: 32, borderRadius: 8, backgroundColor: bg}} />
+      </View>
+      <View style={{height: 1, backgroundColor: bg, marginTop: 14, marginBottom: 14}} />
+      <View style={{width: '100%', height: 40, borderRadius: 12, backgroundColor: bg}} />
     </View>
   );
 }
@@ -113,12 +94,18 @@ export default function SearchResultsScreen() {
   const {category, params} = route.params;
   const city = (params?.city as string) ?? '';
   const country = (params?.country as string) ?? '';
+  const subcategoryId = (params?.subcategoryId as Subcategory) ?? null;
+  const isDemoMode = !!subcategoryId;
 
   const {isLoggedIn} = useAuthStore();
+  const {isActive, currentStep, nextStep} = useDemoStore();
   const [activeSort, setActiveSort] = useState<SortKey>('bestMatch');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
+
+  const getSuppliersBySubcategory = useDemoData(s => s.getSuppliersBySubcategory);
+  const demoSuppliers: DemoSupplier[] = isDemoMode ? getSuppliersBySubcategory(subcategoryId!) : [];
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 1500);
@@ -130,7 +117,6 @@ export default function SearchResultsScreen() {
     setTimeout(() => setRefreshing(false), 1500);
   };
 
-  // Filter suppliers by category + country
   const filtered = useMemo(() => {
     return suppliersData.filter(s => {
       const matchCat = s.categories.includes(category);
@@ -139,7 +125,6 @@ export default function SearchResultsScreen() {
     });
   }, [category, country]);
 
-  // Sort
   const sorted = useMemo(() => {
     const list = [...filtered];
     if (activeSort === 'rating') {
@@ -153,7 +138,6 @@ export default function SearchResultsScreen() {
         return aMatch - bMatch;
       });
     }
-    // bestMatch: platinum first, then rating
     if (activeSort === 'bestMatch') {
       const tierOrder: Record<string, number> = {platinum: 0, pro: 1, basic: 2};
       list.sort((a, b) => {
@@ -163,8 +147,6 @@ export default function SearchResultsScreen() {
     }
     return list;
   }, [filtered, activeSort, city]);
-
-  const iconInfo = CATEGORY_ICON[category] ?? CATEGORY_ICON.manpower;
 
   const handleViewProfile = (supplierId: string) => {
     navigation.navigate('SupplierProfile', {supplierId});
@@ -182,131 +164,261 @@ export default function SearchResultsScreen() {
     navigation.navigate('RFQForm', {category, params: {country, city}});
   };
 
+  const getWorkerCount = (supplier: Supplier): string => {
+    const tier = supplier.subscription_tier;
+    if (tier === 'platinum') return '100+';
+    if (tier === 'pro') return '50+';
+    return '20+';
+  };
+
   const renderSupplier = ({item}: {item: Supplier}) => {
     const tier = TIER_STYLE[item.subscription_tier] ?? TIER_STYLE.basic;
     const displayName = isLoggedIn ? item.name : maskSupplierName(item.id);
-    const accentColor = CATEGORY_ACCENT[category] ?? '#1A4FBA';
+    const accentColor = categoryColors[category] ?? colors.primary;
 
     return (
       <TouchableOpacity
         activeOpacity={0.95}
         onPress={() => handleViewProfile(item.id)}
-        className="bg-white rounded-2xl shadow-sm mb-3"
-        style={{overflow: 'hidden'}}
+        style={[
+          {backgroundColor: colors.card, borderRadius: 16, marginBottom: 12},
+          shadows.md,
+        ]}
       >
-      <View className="flex-row">
-        {/* Left category accent bar */}
-        <View style={{width: 4, backgroundColor: accentColor}} />
-        <View className="flex-1 p-4">
-        {/* Row 1 */}
-        <View className="flex-row items-center">
-          <View
-            className="w-12 h-12 rounded-2xl items-center justify-center"
-            style={{backgroundColor: iconInfo.bg}}
-          >
-            <Text style={{fontSize: 22}}>{iconInfo.emoji}</Text>
-          </View>
+        {/* Top accent line */}
+        <View style={{height: 3, backgroundColor: accentColor, borderTopLeftRadius: 16, borderTopRightRadius: 16}} />
 
-          <View className="flex-1 mx-3">
-            <Text className="text-base font-bold text-[#1A1A2E]" numberOfLines={1}>
-              {displayName}
-            </Text>
-            <Text className="text-xs text-[#6B7280] mt-0.5">
-              {item.city}, {item.country}
-            </Text>
-          </View>
-
-          {item.verified && (
-            <View className="bg-[#E8EEFB] rounded-full px-2 py-0.5 flex-row items-center gap-1 self-start">
-              <Text className="text-[#1A4FBA] text-xs">✓</Text>
-              <Text className="text-[#1A4FBA] text-xs font-medium">{t('common.verified')}</Text>
+        <View style={{padding: 16}}>
+          {/* Row 1: avatar + info + badges */}
+          <View style={{flexDirection: 'row', alignItems: 'flex-start'}}>
+            <CategoryIcon category={category} size={28} withBackground />
+            <View style={{flex: 1, marginLeft: 12}}>
+              <Text style={{fontSize: 15, fontWeight: '700', color: colors.textPrimary}} numberOfLines={1}>
+                {displayName}
+              </Text>
+              <View style={{flexDirection: 'row', alignItems: 'center', marginTop: 3, gap: 3}}>
+                <Icon name="map-marker" size={12} color={colors.textSecondary} />
+                <Text style={{fontSize: 12, color: colors.textSecondary}}>
+                  {item.city}, {item.country}
+                </Text>
+              </View>
             </View>
-          )}
-        </View>
-
-        {/* Row 2 */}
-        <View className="flex-row items-center mt-3">
-          <StarRating rating={item.rating} />
-          <Text className="text-sm font-bold text-[#1A1A2E] ms-1">
-            {item.rating.toFixed(1)}
-          </Text>
-          <View
-            className="rounded-full px-2 py-0.5 ms-auto"
-            style={{backgroundColor: tier.bg}}
-          >
-            <Text className="text-xs font-medium" style={{color: tier.color}}>
-              {tier.label}
-            </Text>
+            <View style={{alignItems: 'flex-end', gap: 4}}>
+              {item.verified && <VerifiedBadge />}
+              <View
+                style={{
+                  backgroundColor: tier.bg,
+                  borderRadius: 20,
+                  paddingHorizontal: 8,
+                  paddingVertical: 3,
+                }}
+              >
+                <Text style={{fontSize: 11, fontWeight: '600', color: tier.color}}>
+                  {tier.label}
+                </Text>
+              </View>
+            </View>
           </View>
-        </View>
 
-        {/* Row 3 */}
-        <View className="mt-2">
-          <AvailabilityBadge t={t} />
-        </View>
+          {/* Divider */}
+          <View style={{height: 1, backgroundColor: '#F1F5F9', marginVertical: 12}} />
 
-        {/* Divider */}
-        <View className="h-px bg-[#E5E7EB] my-3" />
+          {/* Stats row */}
+          <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
+            <View style={{alignItems: 'center', gap: 3}}>
+              <Icon name="account-group" size={18} color={colors.primary} />
+              <Text style={{fontSize: 13, fontWeight: '700', color: colors.textPrimary}}>{getWorkerCount(item)}</Text>
+              <Text style={{fontSize: 10, color: colors.textSecondary}}>Units</Text>
+            </View>
+            <View style={{width: 1, backgroundColor: '#F1F5F9'}} />
+            <View style={{alignItems: 'center', gap: 3}}>
+              <Icon name="calendar-check" size={18} color={colors.textSecondary} />
+              <Text style={{fontSize: 13, fontWeight: '700', color: colors.textPrimary}}>4+ yrs</Text>
+              <Text style={{fontSize: 10, color: colors.textSecondary}}>Exp</Text>
+            </View>
+            <View style={{width: 1, backgroundColor: '#F1F5F9'}} />
+            <View style={{alignItems: 'center', gap: 3}}>
+              <Icon name="clock-fast" size={18} color={colors.success} />
+              <Text style={{fontSize: 13, fontWeight: '700', color: colors.textPrimary}}>&lt; 2h</Text>
+              <Text style={{fontSize: 10, color: colors.textSecondary}}>Response</Text>
+            </View>
+          </View>
 
-        {/* Row 4: Actions */}
-        <View
-          className="border-2 border-[#1A4FBA] h-[40px] rounded-xl items-center justify-center"
-        >
-          <Text className="text-[#1A4FBA] text-sm font-medium">{t('common.viewProfile')}</Text>
+          {/* Divider */}
+          <View style={{height: 1, backgroundColor: '#F1F5F9', marginVertical: 12}} />
+
+          {/* Rating + availability */}
+          <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12}}>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+              <StarRating rating={item.rating} showNumber />
+              <Text style={{fontSize: 11, color: colors.textSecondary}}>
+                ({Math.floor(item.rating * 30)} reviews)
+              </Text>
+            </View>
+            <StatusBadge status="available" />
+          </View>
+
+          {/* Action */}
+          <PremiumButton
+            title={t('common.viewProfile')}
+            iconName="arrow-right"
+            variant="outline"
+            onPress={() => handleViewProfile(item.id)}
+          />
         </View>
-        </View>{/* end flex-1 p-4 */}
-      </View>{/* end flex-row */}
+      </TouchableOpacity>
+    );
+  };
+
+  const renderDemoSupplier = ({item}: {item: DemoSupplier}) => {
+    const availColor = item.availability === 'available' ? colors.success : '#9CA3AF';
+    return (
+      <TouchableOpacity
+        activeOpacity={0.92}
+        onPress={() => handleViewProfile(item.id)}
+        style={[
+          {backgroundColor: colors.card, borderRadius: 16, marginBottom: 12},
+          shadows.md,
+        ]}
+      >
+        {/* Top accent */}
+        <View style={{height: 3, backgroundColor: colors.primary, borderTopLeftRadius: 16, borderTopRightRadius: 16}} />
+
+        <View style={{padding: 16}}>
+          {/* Row 1: company + verified + price */}
+          <View style={{flexDirection: 'row', alignItems: 'flex-start'}}>
+            <CategoryIcon category={category} size={26} withBackground />
+            <View style={{flex: 1, marginHorizontal: 12}}>
+              <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                <Text style={{fontSize: 15, fontWeight: '700', color: colors.textPrimary}} numberOfLines={1}>
+                  {getLocalizedField(item, 'company')}
+                </Text>
+                {item.verified && <VerifiedBadge />}
+              </View>
+              <Text style={{fontSize: 12, color: colors.textSecondary, marginTop: 2}}>
+                {getLocalizedField(item, 'name')}
+              </Text>
+              <View style={{flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4}}>
+                <Icon name="map-marker" size={12} color={colors.textSecondary} />
+                <Text style={{fontSize: 12, color: colors.textSecondary}}>
+                  {getLocalizedField(item, 'city')}
+                </Text>
+              </View>
+            </View>
+            <View style={{alignItems: 'flex-end'}}>
+              <Text style={{fontSize: 11, color: colors.textSecondary}}>{t('demo:labels.pricePerDay')}</Text>
+              <Text style={{fontSize: 16, fontWeight: '700', color: colors.textPrimary}}>
+                {formatCurrency(item.pricePerDay ?? item.pricePerHour ?? 0)}
+              </Text>
+              <View style={{backgroundColor: availColor, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, marginTop: 4}}>
+                <Text style={{color: '#FFF', fontSize: 10, fontWeight: '700'}}>
+                  {t(`demo:labels.${item.availability}`)}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Divider */}
+          <View style={{height: 1, backgroundColor: '#F1F5F9', marginVertical: 12}} />
+
+          {/* Stats */}
+          <View style={{flexDirection: 'row', justifyContent: 'space-around', marginBottom: 12}}>
+            <View style={{alignItems: 'center', gap: 3}}>
+              <StarRating rating={item.rating} showNumber />
+              <Text style={{fontSize: 10, color: colors.textSecondary}}>
+                ({item.totalJobs} {t('demo:labels.totalJobs')})
+              </Text>
+            </View>
+            <View style={{width: 1, backgroundColor: '#F1F5F9'}} />
+            <View style={{alignItems: 'center', gap: 3}}>
+              <Icon name="clock-fast" size={18} color={colors.success} />
+              <Text style={{fontSize: 12, fontWeight: '700', color: colors.textPrimary}}>{item.responseTime}</Text>
+              <Text style={{fontSize: 10, color: colors.textSecondary}}>{t('demo:labels.responseTime')}</Text>
+            </View>
+            <View style={{width: 1, backgroundColor: '#F1F5F9'}} />
+            <View style={{alignItems: 'center', gap: 3}}>
+              <Icon name="briefcase-outline" size={18} color={colors.primary} />
+              <Text style={{fontSize: 12, fontWeight: '700', color: colors.textPrimary}}>{item.yearsExperience} yrs</Text>
+              <Text style={{fontSize: 10, color: colors.textSecondary}}>{t('demo:labels.yearsExperience')}</Text>
+            </View>
+          </View>
+
+          <PremiumButton
+            title={t('common.viewProfile')}
+            iconName="arrow-right"
+            variant="outline"
+            onPress={() => handleViewProfile(item.id)}
+          />
+        </View>
       </TouchableOpacity>
     );
   };
 
   const renderEmpty = () => (
-    <View className="items-center justify-center pt-16">
-      <Text style={{fontSize: 40}}>🔍</Text>
-      <Text className="text-base text-[#6B7280] mt-2 text-center">
-        {t('search.noProviders')}
+    <View style={{alignItems: 'center', justifyContent: 'center', paddingTop: 64}}>
+      <Icon name="magnify-close" size={64} color="#CBD5E1" />
+      <Text style={{fontSize: 17, fontWeight: '700', color: colors.textPrimary, marginTop: 16}}>
+        No suppliers found
+      </Text>
+      <Text style={{fontSize: 14, color: colors.textSecondary, marginTop: 6}}>
+        Try different filters
       </Text>
     </View>
   );
 
   return (
-    <View className="flex-1 bg-[#F5F7FA]">
+    <View style={{flex: 1, backgroundColor: colors.background}}>
 
-      {/* ── HEADER ── */}
+      {/* HEADER */}
       <View
-        className="bg-white shadow-sm"
-        style={{paddingTop: insets.top + 12, paddingBottom: 12, paddingHorizontal: 16}}
+        style={[
+          {
+            backgroundColor: colors.card,
+            paddingTop: insets.top + 12,
+            paddingBottom: 12,
+            paddingHorizontal: 16,
+          },
+          shadows.sm,
+        ]}
       >
-        <View className="flex-row items-center">
+        <View style={{flexDirection: 'row', alignItems: 'center'}}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
-            className="me-3 p-1"
+            style={{marginRight: 12, padding: 4}}
             activeOpacity={0.7}
             hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
           >
-            <Text className="text-[#1A4FBA] text-xl font-bold" style={{transform: [{scaleX: I18nManager.isRTL ? -1 : 1}]}}>←</Text>
+            <View style={{transform: [{scaleX: I18nManager.isRTL ? -1 : 1}]}}>
+              <Icon name="arrow-left" size={24} color={colors.primary} />
+            </View>
           </TouchableOpacity>
-          <View className="flex-1">
-            <Text className="text-lg font-bold text-[#1A1A2E]">{t('search.title')}</Text>
-            <Text className="text-sm text-[#6B7280]">
-              {category.charAt(0).toUpperCase() + category.slice(1)}
-              {city ? ` in ${city}` : ''}
+          <View style={{flex: 1}}>
+            <Text style={{fontSize: 17, fontWeight: '700', color: colors.textPrimary}}>
+              {t('search.title')}
+            </Text>
+            <Text style={{fontSize: 12, color: colors.textSecondary, marginTop: 1}}>
+              {loading
+                ? '...'
+                : isDemoMode
+                  ? `${demoSuppliers.length} ${t('demo:labels.available')}`
+                  : `${sorted.length} results${city ? ` in ${city}` : ''}`}
             </Text>
           </View>
-          <View className="bg-[#E8EEFB] rounded-full px-3 py-1">
-            <Text className="text-[#1A4FBA] text-xs font-semibold">
-              {loading ? '…' : sorted.length}
-            </Text>
-          </View>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+          >
+            <Icon name="filter-variant" size={22} color={colors.textSecondary} />
+          </TouchableOpacity>
         </View>
       </View>
 
-      {/* ── SORT BAR ── */}
-      <View className="bg-white border-b border-[#E5E7EB]">
+      {/* SORT BAR */}
+      <View style={{backgroundColor: colors.card, borderBottomWidth: 1, borderBottomColor: colors.border}}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{paddingVertical: 12, paddingHorizontal: 16, gap: 8}}
+          contentContainerStyle={{paddingVertical: 10, paddingHorizontal: 16, gap: 8}}
         >
           {SORT_OPTIONS.map(opt => {
             const isActive = activeSort === opt.key;
@@ -314,15 +426,30 @@ export default function SearchResultsScreen() {
               <TouchableOpacity
                 key={opt.key}
                 onPress={() => setActiveSort(opt.key)}
-                className={`rounded-full px-4 py-2 ${
-                  isActive ? 'bg-[#1A4FBA]' : 'bg-[#F5F7FA] border border-[#E5E7EB]'
-                }`}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 5,
+                  borderRadius: 20,
+                  paddingHorizontal: 14,
+                  paddingVertical: 7,
+                  backgroundColor: isActive ? colors.primary : colors.card,
+                  borderWidth: isActive ? 0 : 1,
+                  borderColor: colors.border,
+                }}
                 activeOpacity={0.8}
               >
+                <Icon
+                  name={opt.icon}
+                  size={14}
+                  color={isActive ? '#FFFFFF' : colors.textSecondary}
+                />
                 <Text
-                  className={`text-sm font-medium ${
-                    isActive ? 'text-white' : 'text-[#6B7280]'
-                  }`}
+                  style={{
+                    fontSize: 13,
+                    fontWeight: '500',
+                    color: isActive ? '#FFFFFF' : colors.textSecondary,
+                  }}
                 >
                   {t(opt.labelKey)}
                 </Text>
@@ -332,13 +459,41 @@ export default function SearchResultsScreen() {
         </ScrollView>
       </View>
 
-      {/* ── SUPPLIER LIST ── */}
+      {/* SUPPLIER LIST */}
       {loading ? (
-        <ScrollView contentContainerStyle={{paddingHorizontal: 16, paddingTop: 12, paddingBottom: 112}}>
+        <ScrollView
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingTop: 12,
+            paddingBottom: 112,
+          }}
+        >
           <SkeletonCard />
           <SkeletonCard />
           <SkeletonCard />
         </ScrollView>
+      ) : isDemoMode ? (
+        <FlatList
+          data={demoSuppliers}
+          keyExtractor={item => item.id}
+          renderItem={renderDemoSupplier}
+          ListEmptyComponent={renderEmpty}
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingTop: 12,
+            paddingBottom: 112 + insets.bottom,
+            flexGrow: 1,
+          }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }
+        />
       ) : (
         <FlatList
           data={sorted}
@@ -352,42 +507,72 @@ export default function SearchResultsScreen() {
             flexGrow: 1,
           }}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1A4FBA']} tintColor="#1A4FBA" />}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }
         />
       )}
 
-      {/* ── FLOATING BOTTOM BAR ── */}
+      {/* FLOATING BOTTOM BAR */}
       <View
-        className="absolute bottom-0 left-0 right-0 bg-white border-t border-[#E5E7EB]"
         style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          backgroundColor: colors.card,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
           paddingHorizontal: 16,
           paddingTop: 12,
           paddingBottom: 12 + insets.bottom,
-          shadowColor: '#000',
+          shadowColor: '#000000',
           shadowOffset: {width: 0, height: -2},
           shadowOpacity: 0.06,
           shadowRadius: 8,
           elevation: 8,
         }}
       >
-        <TouchableOpacity
-          className="bg-[#1A4FBA] h-[52px] rounded-2xl items-center justify-center"
-          style={{shadowColor: '#1A4FBA', shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6}}
-          activeOpacity={0.85}
+        <PremiumButton
+          title={t('search.broadcastRFQ')}
+          iconName="bullhorn"
+          variant="primary"
           onPress={handleBroadcastRFQ}
-        >
-          <Text className="text-white text-base font-semibold tracking-wide">
-            {t('search.broadcastRFQ')}
-          </Text>
-        </TouchableOpacity>
+        />
       </View>
 
-      {/* ── LOGIN BOTTOM SHEET ── */}
+      {/* LOGIN BOTTOM SHEET */}
       <LoginBottomSheet
         isOpen={loginOpen}
         onClose={() => setLoginOpen(false)}
         onSuccess={handleLoginSuccess}
       />
+
+      {/* DEMO TOOLTIPS */}
+      <DemoTooltip
+        visible={isActive && currentStep === 'search_results'}
+        stepNumber={5} totalSteps={18}
+        title="Step 4: Verified Suppliers"
+        description="EJJAR shows verified suppliers with ratings, response time, fleet size, and availability. Notice the Platinum tier badges for top-rated suppliers."
+        onNext={nextStep}
+      />
+      <DemoTooltip
+        visible={isActive && currentStep === 'tap_submit_rfq'}
+        stepNumber={6} totalSteps={18}
+        title="Step 5: Broadcast RFQ"
+        description="Instead of contacting suppliers one by one, the contractor broadcasts ONE RFQ to ALL matching suppliers at once. This is EJJAR's key innovation."
+        onNext={() => {
+          nextStep();
+          setLoginOpen(true);
+        }}
+      />
+
+      <DemoFloatingBar />
     </View>
   );
 }

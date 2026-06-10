@@ -1,5 +1,5 @@
-import React, {useMemo} from 'react';
-import {I18nManager, ScrollView, Text, TouchableOpacity, View} from 'react-native';
+import React from 'react';
+import {Alert, I18nManager, Pressable, ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useNavigation, useRoute} from '@react-navigation/native';
@@ -8,240 +8,451 @@ import type {RouteProp} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
 
 import type {RootStackParamList} from '../navigation/RootNavigator';
-import type {Supplier} from '../types';
-import {isConfirmed, maskPhone, maskLocation, maskSupplierName} from '../utils/masking';
+import {useDemoData} from '../store/demoDataStore';
 import {useToastStore} from '../store/toastStore';
-
-interface AllocatedResource {resource_id: string; quantity: number; unit: string}
-interface RawJob {
-  id: string; rfq_id: string; supplier_id: string; contractor_id: string;
-  allocated_resources: AllocatedResource[];
-  start_date: string; end_date: string; work_order_url: string;
-  status: string; country: string; city: string;
-}
-interface RawRFQ {id: string; category: string; subcategory: string; [k: string]: unknown}
-interface RawResource {
-  id: string; supplier_id: string; category: string; subcategory: string;
-  status: string; specs: Record<string, unknown>;
-}
-
-const jobsData: RawJob[] = require('../../../shared/mock/jobs.json');
-const rfqsData: RawRFQ[] = require('../../../shared/mock/rfqs.json');
-const suppliersData: Supplier[] = require('../../../shared/mock/suppliers.json');
-const resourcesData: RawResource[] = require('../../../shared/mock/resources.json');
+import Icon from '../components/common/Icon';
+import {colors, shadows} from '../theme/designSystem';
+import CategoryIcon from '../components/common/CategoryIcon';
+import SectionHeader from '../components/common/SectionHeader';
+import {getLocalizedField, formatCurrency} from '../utils/arabicFormatters';
+import type {Job} from '../../../shared/types/demo';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Route = RouteProp<RootStackParamList, 'JobTracking'>;
 
-const CAT_EMOJI: Record<string, string> = {
-  manpower: '👷', machinery: '🏗️', vehicles: '🚛', shipping: '📦',
-};
-const CAT_BG: Record<string, string> = {
-  manpower: '#E8EEFB', machinery: '#FEF3C7', vehicles: '#F0FFF4', shipping: '#F0F9FF',
-};
-const STATUS_BADGE: Record<string, {bg: string; color: string}> = {
-  available: {bg: '#DCFCE7', color: '#15803D'},
-  booked: {bg: '#FEE2E2', color: '#DC2626'},
-  maintenance: {bg: '#FEF3C7', color: '#D97706'},
-  in_transit: {bg: '#E8EEFB', color: '#1A4FBA'},
-};
-
-function getProgress(start: string, end: string): number {
-  const s = new Date(start).getTime();
-  const e = new Date(end).getTime();
-  const now = Date.now();
-  if (now <= s) return 0;
-  if (now >= e) return 1;
-  return (now - s) / (e - s);
-}
-
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-GB', {day: 'numeric', month: 'short'});
+  return new Date(iso).toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'});
 }
+
+const getJobStatusConfig = (status: string) => {
+  const configs: Record<string, {labelAr: string; labelEn: string; color: string}> = {
+    pending_start: {labelAr: 'قيد الانتظار', labelEn: 'Pending Start', color: '#6B7280'},
+    in_progress:   {labelAr: 'جارية',        labelEn: 'In Progress',   color: colors.warning},
+    paused:        {labelAr: 'متوقفة',       labelEn: 'Paused',        color: '#B45309'},
+    completed:     {labelAr: 'مكتملة',       labelEn: 'Completed',     color: colors.success},
+    cancelled:     {labelAr: 'ملغاة',        labelEn: 'Cancelled',     color: colors.error},
+    disputed:      {labelAr: 'متنازع عليها', labelEn: 'Disputed',      color: '#DC2626'},
+  };
+  return configs[status] ?? configs.pending_start;
+};
 
 export default function JobTrackingScreen() {
-  const {t} = useTranslation();
+  const {i18n} = useTranslation();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
   const {showToast} = useToastStore();
+  const isAr = i18n.language === 'ar';
 
   const {jobId} = route.params;
-  const job = jobsData.find(j => j.id === jobId) ?? jobsData[0];
-  const rfq = rfqsData.find(r => r.id === job.rfq_id);
-  const supplier = suppliersData.find(s => s.id === job.supplier_id);
-  const category = rfq?.category ?? 'manpower';
-  const emoji = CAT_EMOJI[category] ?? '📦';
-  const catBg = CAT_BG[category] ?? '#E8EEFB';
+  const jobs = useDemoData(s => s.jobs);
+  const completeJob = useDemoData(s => s.completeJob);
+  const cancelJob = useDemoData(s => s.cancelJob);
+  const completeJobMilestone = useDemoData(s => s.completeJobMilestone);
+  const getSupplierById = useDemoData(s => s.getSupplierById);
 
-  const allocatedResources = useMemo(
-    () => job.allocated_resources.map(a => ({
-      ...a,
-      resource: resourcesData.find(r => r.id === a.resource_id),
-    })),
-    [job],
-  );
+  const job: Job | undefined = jobs.find(j => j.id === jobId);
 
-  const progress = getProgress(job.start_date, job.end_date);
-  const confirmed = isConfirmed(job.status as any);
+  if (!job) {
+    return (
+      <View style={{flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center'}}>
+        <Icon name="alert-circle-outline" size={48} color={colors.textSecondary} />
+        <Text style={{fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginTop: 16}}>
+          {isAr ? 'العمل غير موجود' : 'Job not found'}
+        </Text>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={{marginTop: 16, paddingHorizontal: 24, paddingVertical: 10, backgroundColor: colors.primary, borderRadius: 12}}
+        >
+          <Text style={{color: '#FFFFFF', fontWeight: '600'}}>{isAr ? 'رجوع' : 'Go Back'}</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const supplier = getSupplierById(job.supplierId);
+  const statusCfg = getJobStatusConfig(job.status);
+  const progressPct = job.progress;
+  const isCompleted = job.status === 'completed';
+  const isCancelled = job.status === 'cancelled';
+  const isDone = isCompleted || isCancelled;
+
+  const handleCompleteJob = () => {
+    Alert.alert(
+      isAr ? 'إتمام العمل' : 'Complete Job',
+      isAr ? 'هل أنت متأكد من إتمام هذا العمل؟' : 'Are you sure you want to mark this job as completed?',
+      [
+        {text: isAr ? 'إلغاء' : 'Cancel', style: 'cancel'},
+        {
+          text: isAr ? 'إتمام' : 'Complete',
+          onPress: () => {
+            completeJob(job.id);
+            showToast(isAr ? 'تم إتمام العمل بنجاح' : 'Job completed successfully', 'success');
+          },
+        },
+      ],
+    );
+  };
+
+  const handleCancelJob = () => {
+    Alert.alert(
+      isAr ? 'إلغاء العمل' : 'Cancel Job',
+      isAr ? 'هل أنت متأكد من إلغاء هذا العمل؟' : 'Are you sure you want to cancel this job?',
+      [
+        {text: isAr ? 'لا' : 'No', style: 'cancel'},
+        {
+          text: isAr ? 'إلغاء العمل' : 'Cancel Job',
+          style: 'destructive',
+          onPress: () => {
+            cancelJob(job.id);
+            showToast(isAr ? 'تم إلغاء العمل' : 'Job cancelled', 'info');
+          },
+        },
+      ],
+    );
+  };
 
   return (
-    <View className="flex-1 bg-[#F5F7FA]">
+    <View style={{flex: 1, backgroundColor: colors.background}}>
       {/* GRADIENT HEADER */}
       <LinearGradient
-        colors={['#1A4FBA', '#143D9B']}
-        className="px-4 pb-6"
-        style={{paddingTop: insets.top + 12}}
+        colors={['#192433', '#0F1A26']}
+        style={{paddingTop: insets.top + 12, paddingBottom: 24, paddingHorizontal: 16}}
       >
-        <View className="flex-row items-center">
-          <TouchableOpacity onPress={() => navigation.goBack()} className="me-3 p-1" hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-            <Text className="text-white text-xl font-bold" style={{transform: [{scaleX: I18nManager.isRTL ? -1 : 1}]}}>←</Text>
+        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={{marginEnd: 12, padding: 4}}
+            hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+            activeOpacity={0.7}
+          >
+            <View style={{transform: [{scaleX: I18nManager.isRTL ? -1 : 1}]}}>
+              <Icon name="arrow-left" size={24} color="#FFFFFF" />
+            </View>
           </TouchableOpacity>
-          <Text className="text-white text-lg font-bold flex-1 capitalize">{category}</Text>
-          <View className="border border-white/60 rounded-full px-3 py-1">
-            <Text className="text-white text-xs font-medium capitalize">
-              {job.status.replace('_', ' ')}
+
+          <View style={{flex: 1}}>
+            <Text style={{fontSize: 18, fontWeight: '700', color: '#FFFFFF'}} numberOfLines={1}>
+              {getLocalizedField(job, 'title')}
+            </Text>
+            <Text style={{fontSize: 12, color: 'rgba(255,255,255,0.75)', marginTop: 2}}>
+              {getLocalizedField(job, 'city')}
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            onPress={() => showToast('Sharing...', 'info')}
+            style={{padding: 4}}
+            hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+            activeOpacity={0.7}
+          >
+            <Icon name="share-variant" size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Status chip + amount */}
+        <View style={{flexDirection: 'row', alignItems: 'center', marginTop: 16, gap: 10}}>
+          <View style={{
+            flexDirection: 'row', alignItems: 'center', gap: 6,
+            backgroundColor: 'rgba(255,255,255,0.15)',
+            borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6,
+          }}>
+            <Icon
+              name={isCompleted ? 'check-circle' : isCancelled ? 'close-circle' : 'progress-clock'}
+              size={14}
+              color="#FFFFFF"
+            />
+            <Text style={{fontSize: 13, fontWeight: '600', color: '#FFFFFF'}}>
+              {isAr ? statusCfg.labelAr : statusCfg.labelEn}
+            </Text>
+          </View>
+          <View style={{
+            backgroundColor: 'rgba(255,255,255,0.15)',
+            borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6,
+          }}>
+            <Text style={{fontSize: 13, fontWeight: '600', color: '#FFFFFF'}}>
+              {formatCurrency(job.amount)}
             </Text>
           </View>
         </View>
       </LinearGradient>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom: 40}}>
-        {/* STATUS ALERT */}
-        <View
-          className="mx-4 mt-4 rounded-2xl p-4"
-          style={{backgroundColor: job.status === 'completed' ? '#DCFCE7' : '#FEF3C7'}}
-        >
-          <Text
-            className="font-semibold text-base"
-            style={{color: job.status === 'completed' ? '#15803D' : '#D97706'}}
-          >
-            {job.status === 'completed' ? `✓ ${t('job.completed')}` : `⏱ ${t('job.inProgress')}`}
-          </Text>
-        </View>
-
-        {/* JOB INFO CARD */}
-        <View className="bg-white rounded-2xl shadow-sm mx-4 mt-3 p-4">
-          <View className="flex-row items-center mb-3">
-            <View className="w-10 h-10 rounded-xl items-center justify-center me-3" style={{backgroundColor: catBg}}>
-              <Text style={{fontSize: 20}}>{emoji}</Text>
-            </View>
-            <View className="flex-1">
-              <Text className="text-[#1A1A2E] text-base font-bold capitalize">
-                {rfq?.subcategory?.replace(/_/g, ' ') ?? category}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{paddingBottom: isDone ? 40 : 100, marginTop: -8}}
+      >
+        {/* COMPLETED BANNER */}
+        {isCompleted && (
+          <View style={{
+            backgroundColor: '#DCFCE7', marginHorizontal: 16, marginTop: 12,
+            borderRadius: 14, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10,
+          }}>
+            <Icon name="check-circle" size={22} color={colors.success} />
+            <View style={{flex: 1}}>
+              <Text style={{fontSize: 14, fontWeight: '700', color: '#15803D'}}>
+                {isAr ? 'تم إتمام العمل بنجاح' : 'Job Completed Successfully'}
               </Text>
-              <Text className="text-[#6B7280] text-xs mt-0.5">{job.city}, {job.country}</Text>
+              <Text style={{fontSize: 12, color: '#166534', marginTop: 2}}>
+                {job.completionDate ? fmtDate(job.completionDate) : ''}
+              </Text>
             </View>
           </View>
-          <View className="h-px bg-[#F5F7FA] mb-3" />
-          <Text className="text-[#6B7280] text-sm">
-            {fmtDate(job.start_date)} → {fmtDate(job.end_date)}
-          </Text>
-        </View>
+        )}
 
-        {/* PROGRESS BAR */}
-        <View className="bg-white rounded-2xl shadow-sm mx-4 mt-3 p-4">
-          <Text className="text-[#1A1A2E] text-sm font-semibold mb-3">{t('job.timeline')}</Text>
-          <View className="flex-row items-center">
-            <Text className="text-[#6B7280] text-xs">{fmtDate(job.start_date)}</Text>
-            <View className="flex-1 mx-2 h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
-              <View
-                className="h-2 rounded-full bg-[#1A4FBA]"
-                style={{width: `${Math.round(progress * 100)}%`}}
-              />
-            </View>
-            <Text className="text-[#6B7280] text-xs">{fmtDate(job.end_date)}</Text>
+        {/* CANCELLED BANNER */}
+        {isCancelled && (
+          <View style={{
+            backgroundColor: colors.errorLight, marginHorizontal: 16, marginTop: 12,
+            borderRadius: 14, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10,
+          }}>
+            <Icon name="close-circle" size={22} color={colors.error} />
+            <Text style={{fontSize: 14, fontWeight: '700', color: colors.error}}>
+              {isAr ? 'تم إلغاء العمل' : 'Job Cancelled'}
+            </Text>
           </View>
-          <Text className="text-[#9CA3AF] text-xs mt-2 text-center">
-            {Math.round(progress * 100)}% complete
-          </Text>
+        )}
+
+        {/* TIMELINE CARD */}
+        <View style={[{
+          backgroundColor: colors.card, borderRadius: 20,
+          marginHorizontal: 16, marginTop: 12, padding: 16,
+        }, shadows.md]}>
+          <SectionHeader title={isAr ? 'التقدم' : 'Progress'} iconName="calendar-range" />
+
+          <View style={{marginTop: 12}}>
+            <View style={{height: 8, backgroundColor: '#E2E8F0', borderRadius: 4, overflow: 'hidden'}}>
+              <View style={{
+                width: `${progressPct}%`,
+                height: 8,
+                backgroundColor: isCompleted ? colors.success : colors.warning,
+                borderRadius: 4,
+              }} />
+            </View>
+
+            <View style={{flexDirection: 'row', justifyContent: 'space-between', marginTop: 6}}>
+              <Text style={{fontSize: 11, color: colors.textSecondary}}>{fmtDate(job.startDate)}</Text>
+              <Text style={{fontSize: 11, fontWeight: '700', color: isCompleted ? colors.success : colors.warning}}>
+                {progressPct}%
+              </Text>
+              <Text style={{fontSize: 11, color: colors.textSecondary}}>
+                {job.completionDate ? fmtDate(job.completionDate) : isAr ? 'جارية' : 'Ongoing'}
+              </Text>
+            </View>
+          </View>
         </View>
 
-        {/* ALLOCATED RESOURCES */}
-        <View className="mx-4 mt-3">
-          <Text className="text-[#1A1A2E] text-base font-bold mb-2">{t('job.allocatedResources')}</Text>
-          {allocatedResources.map((item, idx) => {
-            const res = item.resource;
-            const resCat = res?.category ?? category;
-            const badge = STATUS_BADGE[res?.status ?? 'available'] ?? STATUS_BADGE.available;
-            const specEntries = res ? Object.entries(res.specs).slice(0, 2) : [];
-            return (
-              <View key={item.resource_id} className="bg-white rounded-xl shadow-sm p-3 mb-2 flex-row items-center">
-                <View className="w-10 h-10 rounded-xl items-center justify-center me-3" style={{backgroundColor: CAT_BG[resCat] ?? '#E8EEFB'}}>
-                  <Text style={{fontSize: 18}}>{CAT_EMOJI[resCat] ?? '📦'}</Text>
-                </View>
-                <View className="flex-1">
-                  <Text className="text-[#1A1A2E] text-sm font-medium capitalize">
-                    {res?.subcategory?.replace(/_/g, ' ') ?? item.resource_id}
-                  </Text>
-                  <Text className="text-[#6B7280] text-xs mt-0.5">
-                    {item.quantity} {item.unit}
-                    {specEntries.length > 0 && ' · '}
-                    {specEntries.map(([k, v]) => `${k.replace(/_/g, ' ')}: ${v}`).join(' · ')}
-                  </Text>
-                </View>
-                <View className="rounded-full px-2 py-0.5" style={{backgroundColor: badge.bg}}>
-                  <Text className="text-xs capitalize" style={{color: badge.color}}>
-                    {(res?.status ?? 'available').replace(/_/g, ' ')}
-                  </Text>
-                </View>
-              </View>
-            );
-          })}
-        </View>
+        {/* MILESTONES */}
+        {job.milestones.length > 0 && (
+          <View style={[{
+            backgroundColor: colors.card, borderRadius: 20,
+            marginHorizontal: 16, marginTop: 12, padding: 16,
+          }, shadows.sm]}>
+            <SectionHeader title={isAr ? 'المراحل' : 'Milestones'} iconName="flag-checkered" />
+
+            <View style={{marginTop: 12, gap: 8}}>
+              {job.milestones.map((milestone, index) => (
+                <Pressable
+                  key={index}
+                  onPress={() => {
+                    if (!milestone.completed && !isDone) {
+                      completeJobMilestone(job.id, index);
+                    }
+                  }}
+                  style={[{
+                    flexDirection: 'row', alignItems: 'center', gap: 12,
+                    backgroundColor: milestone.completed ? '#F0FDF4' : '#F8FAFC',
+                    borderRadius: 12, padding: 12,
+                    borderWidth: 1,
+                    borderColor: milestone.completed ? '#BBF7D0' : colors.border,
+                  }]}
+                >
+                  <View style={{
+                    width: 28, height: 28, borderRadius: 14,
+                    backgroundColor: milestone.completed ? colors.success : '#E2E8F0',
+                    alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Icon
+                      name={milestone.completed ? 'check' : 'circle-outline'}
+                      size={16}
+                      color={milestone.completed ? '#FFFFFF' : colors.textSecondary}
+                    />
+                  </View>
+                  <View style={{flex: 1}}>
+                    <Text style={{
+                      fontSize: 13, fontWeight: '600',
+                      color: milestone.completed ? '#15803D' : colors.textPrimary,
+                    }}>
+                      {isAr ? milestone.nameAr : milestone.name}
+                    </Text>
+                    {milestone.date && (
+                      <Text style={{fontSize: 11, color: colors.textSecondary, marginTop: 2}}>
+                        {fmtDate(milestone.date)}
+                      </Text>
+                    )}
+                  </View>
+                  {!milestone.completed && !isDone && (
+                    <Text style={{fontSize: 11, color: colors.primary, fontWeight: '600'}}>
+                      {isAr ? 'اضغط للإتمام' : 'Tap to complete'}
+                    </Text>
+                  )}
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* SUPPLIER CONTACT */}
-        <View className="bg-white rounded-2xl shadow-sm mx-4 mt-3 p-4">
-          <Text className="text-[#1A1A2E] text-sm font-bold mb-3">{t('job.supplierContact')}</Text>
-          {confirmed && supplier ? (
-            <View>
-              <Text className="text-[#1A1A2E] text-base font-semibold">{supplier.name}</Text>
-              <Text className="text-[#6B7280] text-sm mt-0.5">{supplier.city}, {supplier.country}</Text>
-              <TouchableOpacity
-                className="bg-[#DCFCE7] rounded-xl py-2 px-4 self-start mt-3 flex-row items-center gap-2"
-                activeOpacity={0.8}
-                onPress={() => showToast(`Calling ${supplier.phone}`, 'success')}
-              >
-                <Text style={{fontSize: 16}}>📞</Text>
-                <Text className="text-[#15803D] font-medium">{supplier.phone}</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View>
-              <Text className="text-[#1A1A2E] text-base font-semibold">
-                {supplier ? maskSupplierName(supplier.id) : '●●●●'}
-              </Text>
-              <Text className="text-[#6B7280] text-sm mt-0.5">
-                {job.city ? maskLocation(job.city, 5) : '●●●●'}
-              </Text>
-              <Text className="text-[#9CA3AF] text-xs mt-2">
-                📞 {maskPhone('')}
-              </Text>
-              <Text className="text-[#9CA3AF] text-xs mt-1">
-                Contact details available after confirmation
-              </Text>
-            </View>
-          )}
+        <View style={[{
+          backgroundColor: colors.card, borderRadius: 20,
+          marginHorizontal: 16, marginTop: 12, padding: 16,
+        }, shadows.sm]}>
+          <SectionHeader title={isAr ? 'المورد' : 'Supplier'} iconName="account-tie" />
+
+          <View style={{marginTop: 12}}>
+            {supplier ? (
+              <View>
+                <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+                  <View style={{
+                    width: 44, height: 44, borderRadius: 22,
+                    backgroundColor: colors.primaryLight,
+                    alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <CategoryIcon category={job.category} size={20} />
+                  </View>
+                  <View style={{flex: 1}}>
+                    <Text style={{fontSize: 15, fontWeight: '700', color: colors.textPrimary}}>
+                      {isAr ? supplier.nameAr : supplier.name}
+                    </Text>
+                    <Text style={{fontSize: 12, color: colors.textSecondary, marginTop: 2}}>
+                      {isAr ? supplier.cityAr : supplier.city}
+                    </Text>
+                  </View>
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 3}}>
+                    <Icon name="star" size={13} color="#F59E0B" />
+                    <Text style={{fontSize: 12, fontWeight: '600', color: colors.textPrimary}}>
+                      {supplier.rating.toFixed(1)}
+                    </Text>
+                  </View>
+                </View>
+
+                <TouchableOpacity
+                  style={{
+                    flexDirection: 'row', alignItems: 'center', gap: 8,
+                    backgroundColor: '#DCFCE7', borderRadius: 12,
+                    paddingHorizontal: 16, paddingVertical: 12, marginTop: 12,
+                  }}
+                  activeOpacity={0.8}
+                  onPress={() => showToast(`Calling ${supplier.phone}`, 'success')}
+                >
+                  <Icon name="phone" size={18} color={colors.success} />
+                  <Text style={{fontSize: 15, fontWeight: '600', color: colors.success}}>
+                    {supplier.phone}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+                <View style={{
+                  width: 44, height: 44, borderRadius: 22,
+                  backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Icon name="account-tie" size={22} color={colors.textSecondary} />
+                </View>
+                <Text style={{fontSize: 14, color: colors.textSecondary}}>
+                  {isAr ? 'المورد غير موجود' : 'Supplier not found'}
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
 
-        {/* BOTTOM BUTTONS */}
-        <TouchableOpacity
-          className="border-2 border-[#1A4FBA] h-[48px] rounded-2xl items-center justify-center mx-4 mt-4"
-          activeOpacity={0.7}
-          onPress={() => showToast('Opening Work Order...', 'info')}
-        >
-          <Text className="text-[#1A4FBA] text-base font-medium">{t('job.workOrder')}</Text>
-        </TouchableOpacity>
+        {/* JOB DETAILS */}
+        <View style={[{
+          backgroundColor: colors.card, borderRadius: 20,
+          marginHorizontal: 16, marginTop: 12, padding: 16,
+        }, shadows.sm]}>
+          <SectionHeader title={isAr ? 'تفاصيل العمل' : 'Job Details'} iconName="briefcase-outline" />
 
-        <TouchableOpacity
-          className="bg-[#1A4FBA] h-[52px] rounded-2xl items-center justify-center mx-4 mt-3 mb-8"
-          style={{shadowColor: '#1A4FBA', shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6}}
-          activeOpacity={0.85}
-          onPress={() => showToast(t('job.completed'), 'success')}
-        >
-          <Text className="text-white text-base font-semibold tracking-wide">{t('common.markCompleted')}</Text>
-        </TouchableOpacity>
+          <View style={{marginTop: 12, gap: 10}}>
+            <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+              <Text style={{fontSize: 13, color: colors.textSecondary}}>{isAr ? 'الفئة' : 'Category'}</Text>
+              <Text style={{fontSize: 13, fontWeight: '600', color: colors.textPrimary, textTransform: 'capitalize'}}>
+                {job.category}
+              </Text>
+            </View>
+            <View style={{height: 1, backgroundColor: colors.border}} />
+            <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+              <Text style={{fontSize: 13, color: colors.textSecondary}}>{isAr ? 'المبلغ' : 'Amount'}</Text>
+              <Text style={{fontSize: 13, fontWeight: '600', color: colors.primary}}>
+                {formatCurrency(job.amount)}
+              </Text>
+            </View>
+            <View style={{height: 1, backgroundColor: colors.border}} />
+            <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+              <Text style={{fontSize: 13, color: colors.textSecondary}}>{isAr ? 'تاريخ البدء' : 'Start Date'}</Text>
+              <Text style={{fontSize: 13, fontWeight: '600', color: colors.textPrimary}}>
+                {fmtDate(job.startDate)}
+              </Text>
+            </View>
+            {job.completionDate && (
+              <>
+                <View style={{height: 1, backgroundColor: colors.border}} />
+                <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                  <Text style={{fontSize: 13, color: colors.textSecondary}}>{isAr ? 'تاريخ الإتمام' : 'Completion'}</Text>
+                  <Text style={{fontSize: 13, fontWeight: '600', color: colors.success}}>
+                    {fmtDate(job.completionDate)}
+                  </Text>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
       </ScrollView>
+
+      {/* STICKY COMPLETE / CANCEL BUTTONS */}
+      {!isDone && (
+        <View style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0,
+          backgroundColor: colors.card,
+          paddingHorizontal: 16,
+          paddingTop: 12,
+          paddingBottom: insets.bottom + 12,
+          flexDirection: 'row', gap: 10,
+          borderTopWidth: 1, borderTopColor: colors.border,
+        }}>
+          <TouchableOpacity
+            onPress={handleCancelJob}
+            activeOpacity={0.85}
+            style={{
+              flex: 1, paddingVertical: 14, borderRadius: 14,
+              backgroundColor: colors.errorLight,
+              alignItems: 'center', justifyContent: 'center',
+              flexDirection: 'row', gap: 6,
+            }}
+          >
+            <Icon name="close-circle-outline" size={18} color={colors.error} />
+            <Text style={{fontSize: 15, fontWeight: '700', color: colors.error}}>
+              {isAr ? 'إلغاء' : 'Cancel Job'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handleCompleteJob}
+            activeOpacity={0.85}
+            style={{
+              flex: 2, paddingVertical: 14, borderRadius: 14,
+              backgroundColor: colors.success,
+              alignItems: 'center', justifyContent: 'center',
+              flexDirection: 'row', gap: 6,
+            }}
+          >
+            <Icon name="check-circle-outline" size={18} color="#FFFFFF" />
+            <Text style={{fontSize: 15, fontWeight: '700', color: '#FFFFFF'}}>
+              {isAr ? 'إتمام العمل' : 'Mark as Complete'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }

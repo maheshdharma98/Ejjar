@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   I18nManager,
   KeyboardAvoidingView,
@@ -16,12 +17,20 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {RouteProp} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
+import Icon from '../components/common/Icon';
+import DatePickerInput from '../components/common/DatePickerInput';
 
 import type {RootStackParamList} from '../navigation/RootNavigator';
+import {useDemoData} from '../store/demoDataStore';
+import type {Category, Subcategory} from '../../../shared/types/demo';
+import {useDemoStore} from '../store/demoStore';
+import DemoTooltip from '../components/common/DemoTooltip';
+import DemoFloatingBar from '../components/common/DemoFloatingBar';
 import {useToastStore} from '../store/toastStore';
-import {maskPhone} from '../utils/masking';
+import {colors, shadows} from '../theme/designSystem';
+import SectionHeader from '../components/common/SectionHeader';
+import PremiumButton from '../components/common/PremiumButton';
 
-const GCC = require('../../../shared/mock/gcc_regions.json') as Record<string, string[]>;
 const TAX = require('../../../shared/mock/taxonomy.json') as {
   manpower: {slug: string; label_en: string}[];
   machinery: {slug: string; label_en: string}[];
@@ -40,9 +49,7 @@ interface PickerState {
   onSelect: (v: string, l: string) => void;
 }
 
-const COUNTRY_OPTIONS = Object.keys(GCC).map(c => ({label: c, value: c}));
-const getCities = (country: string): Option[] =>
-  (GCC[country] ?? []).map((c: string) => ({label: c, value: c}));
+const OMAN_CITIES: Option[] = ['Muscat', 'Sohar', 'Salalah', 'Nizwa', 'Sur', 'Duqm', 'Ibri', 'Rustaq'].map(c => ({label: c, value: c}));
 const MP_ROLES = TAX.manpower.map(r => ({label: r.label_en, value: r.slug}));
 const MCH_TYPES = TAX.machinery.map(m => ({label: m.label_en, value: m.slug}));
 const VEH_TYPES = TAX.vehicles.map(v => ({label: v.label_en, value: v.slug}));
@@ -68,23 +75,107 @@ const SEATING: Option[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// Shared field components
+// Shared field sub-components
 // ---------------------------------------------------------------------------
 
-function SelectField({label, value, onPress}: {label: string; value: string; onPress: () => void}) {
+function FieldLabel({label}: {label: string}) {
   return (
-    <View className="mb-4">
-      <Text className="text-[#1A1A2E] text-sm font-medium mb-1 ps-1">{label}</Text>
+    <Text
+      style={{
+        fontSize: 11,
+        fontWeight: '600',
+        color: colors.textSecondary,
+        textTransform: 'uppercase',
+        letterSpacing: 0.6,
+        marginBottom: 6,
+      }}
+    >
+      {label}
+    </Text>
+  );
+}
+
+function IconSelectField({
+  label,
+  value,
+  onPress,
+  iconName,
+}: {
+  label: string;
+  value: string;
+  onPress: () => void;
+  iconName: string;
+}) {
+  return (
+    <View style={{marginBottom: 14}}>
+      <FieldLabel label={label} />
       <TouchableOpacity
-        className="bg-white border border-[#E5E7EB] rounded-xl h-[48px] px-4 flex-row items-center"
+        style={{
+          backgroundColor: colors.background,
+          borderWidth: 1,
+          borderColor: colors.border,
+          borderRadius: 12,
+          height: 48,
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: 12,
+        }}
         activeOpacity={0.7}
         onPress={onPress}
       >
-        <Text className={`flex-1 text-base ${value ? 'text-[#1A1A2E]' : 'text-[#9CA3AF]'}`} numberOfLines={1}>
+        <Icon name={iconName} size={20} color={colors.textSecondary} />
+        <Text
+          style={{flex: 1, fontSize: 15, color: value ? colors.textPrimary : colors.muted, marginLeft: 10}}
+          numberOfLines={1}
+        >
           {value || label}
         </Text>
-        <Text className="text-[#6B7280]">▼</Text>
+        <Icon name="chevron-down" size={18} color={colors.textSecondary} />
       </TouchableOpacity>
+    </View>
+  );
+}
+
+function IconTextInput({
+  label,
+  value,
+  onChange,
+  iconName,
+  placeholder,
+  keyboardType,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  iconName: string;
+  placeholder?: string;
+  keyboardType?: 'default' | 'number-pad' | 'decimal-pad';
+}) {
+  return (
+    <View style={{marginBottom: 14}}>
+      <FieldLabel label={label} />
+      <View
+        style={{
+          backgroundColor: colors.background,
+          borderWidth: 1,
+          borderColor: colors.border,
+          borderRadius: 12,
+          height: 48,
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: 12,
+        }}
+      >
+        <Icon name={iconName} size={20} color={colors.textSecondary} />
+        <TextInput
+          style={{flex: 1, fontSize: 15, color: colors.textPrimary, marginLeft: 10}}
+          value={value}
+          onChangeText={onChange}
+          placeholder={placeholder ?? ''}
+          placeholderTextColor={colors.muted}
+          keyboardType={keyboardType}
+        />
+      </View>
     </View>
   );
 }
@@ -92,18 +183,38 @@ function SelectField({label, value, onPress}: {label: string; value: string; onP
 function Toggle({value, onToggle}: {value: boolean; onToggle: () => void}) {
   return (
     <TouchableOpacity
-      className={`w-[51px] h-[31px] rounded-full justify-center px-0.5 ${value ? 'bg-[#1A4FBA]' : 'bg-[#E5E7EB]'}`}
+      style={{
+        width: 51,
+        height: 31,
+        borderRadius: 16,
+        justifyContent: 'center',
+        paddingHorizontal: 2,
+        backgroundColor: value ? colors.primary : colors.border,
+      }}
       onPress={onToggle}
       activeOpacity={0.9}
     >
-      <View className={`w-[27px] h-[27px] rounded-full bg-white shadow-sm ${value ? 'self-end' : 'self-start'}`} />
+      <View
+        style={{
+          width: 27,
+          height: 27,
+          borderRadius: 14,
+          backgroundColor: colors.card,
+          alignSelf: value ? 'flex-end' : 'flex-start',
+          ...shadows.sm,
+        }}
+      />
     </TouchableOpacity>
   );
 }
 
 function ErrorText({msg}: {msg: string}) {
   if (!msg) return null;
-  return <Text className="text-[#EF4444] text-xs mt-1 ps-1">{msg}</Text>;
+  return (
+    <Text style={{color: colors.error, fontSize: 11, marginTop: 4, paddingStart: 4}}>
+      {msg}
+    </Text>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -111,22 +222,33 @@ function ErrorText({msg}: {msg: string}) {
 // ---------------------------------------------------------------------------
 
 export default function RFQFormScreen() {
-  const {t} = useTranslation();
+  const {t, i18n} = useTranslation();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
   const {showToast} = useToastStore();
+  const {isActive, currentStep, nextStep} = useDemoStore();
 
   const {category, params} = route.params;
   const initCountry = (params?.country as string) ?? '';
   const initCity = (params?.city as string) ?? '';
+  const subcategoryId = ((params?.subcategoryId as string) ?? (params?.subcategory as string) ?? '') as Subcategory | '';
+  const isDemoRFQMode = !!subcategoryId;
 
-  // Common fields
-  const [description, setDescription] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
-  const [country, setCountry] = useState(initCountry);
-  const [city, setCity] = useState(initCity);
+  const {createRFQ, currentUserId, getSuppliersBySubcategory} = useDemoData();
+
+  const initDescription = isDemoRFQMode
+    ? `${t(`demo:subcategories.${subcategoryId}`)} — ${t('rfq.description')}`
+    : '';
+  const initCountryFinal = 'Oman';
+  const initCityFinal = isDemoRFQMode ? 'Muscat' : (initCity || '');
+
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
+  const [description, setDescription] = useState(initDescription);
+  const [dateFrom, setDateFrom] = useState<Date | null>(null);
+  const [dateTo, setDateTo] = useState<Date | null>(null);
+  const [country] = useState(initCountryFinal);
+  const [city, setCity] = useState(initCityFinal);
   const [fileName, setFileName] = useState<string | null>(null);
   const [signed, setSigned] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -165,12 +287,11 @@ export default function RFQFormScreen() {
   const [shpFragile, setShpFragile] = useState(false);
   const [shpHazmat, setShpHazmat] = useState(false);
   const [shpColdChain, setShpColdChain] = useState(false);
-  const [shpPickupCountry, setShpPickupCountry] = useState(initCountry);
-  const [shpPickupCity, setShpPickupCity] = useState(initCity);
-  const [shpDropoffCountry, setShpDropoffCountry] = useState('');
+  const [shpPickupCountry] = useState('Oman');
+  const [shpPickupCity, setShpPickupCity] = useState(initCity || '');
+  const [shpDropoffCountry] = useState('Oman');
   const [shpDropoffCity, setShpDropoffCity] = useState('');
 
-  // Picker
   const [picker, setPicker] = useState<PickerState>({visible: false, title: '', options: [], onSelect: () => {}});
   const openPicker = (title: string, options: Option[], onSelect: (v: string, l: string) => void) =>
     setPicker({visible: true, title, options, onSelect});
@@ -185,9 +306,8 @@ export default function RFQFormScreen() {
   const validate = () => {
     const e: Record<string, string> = {};
     if (!description.trim()) e.description = t('common.required');
-    if (!dateFrom.trim()) e.dateFrom = t('common.required');
-    if (!dateTo.trim()) e.dateTo = t('common.required');
-    if (!country) e.country = t('common.required');
+    if (!dateFrom) e.dateFrom = t('common.required');
+    if (!dateTo) e.dateTo = t('common.required');
     if (!signed) e.signed = t('common.required');
     if (!termsAccepted) e.terms = t('common.required');
     setErrors(e);
@@ -195,167 +315,188 @@ export default function RFQFormScreen() {
   };
 
   const handleSubmit = () => {
+    if (isActive) { nextStep(); return; }
     if (!validate()) return;
+
+    if (isDemoRFQMode && subcategoryId) {
+      setIsBroadcasting(true);
+      setTimeout(() => {
+        const matchedSuppliers = getSuppliersBySubcategory(subcategoryId);
+        createRFQ({
+          contractorId: currentUserId,
+          category: category as Category,
+          subcategory: subcategoryId,
+          title: `${subcategoryId} request`,
+          titleAr: `طلب ${t(`demo:subcategories.${subcategoryId}`)}`,
+          description: description.trim(),
+          descriptionAr: description.trim(),
+          city: city || 'Muscat',
+          cityAr: city || 'مسقط',
+          budget: {min: 0, max: 1000, currency: 'OMR'},
+          startDate: dateFrom ? dateFrom.toISOString() : new Date().toISOString(),
+          duration: 'daily',
+          durationAr: 'يومي',
+          status: 'broadcasted',
+          broadcastedTo: matchedSuppliers.map(s => s.id),
+        });
+        setIsBroadcasting(false);
+        showToast(t('rfq.sent'), 'success');
+        navigation.navigate('MyRFQs');
+      }, 2200);
+      return;
+    }
+
     showToast(t('rfq.sent'), 'success');
     navigation.navigate('RFQDetail', {rfqId: 'rfq-002'});
   };
 
-  const labelOf = (slug: string, list: Option[]) =>
-    list.find(o => o.value === slug)?.label ?? '';
+  // suppress unused variable warnings
+  void mpRole; void mpSkill; void mchType; void mchDuration; void vehType; void vehDriver;
+  void vehPeriod; void vehKm; void vehSeating; void shpType;
+  void shpPickupCountry; void shpDropoffCountry; void country;
 
   return (
-    <View className="flex-1 bg-[#F5F7FA]">
+    <View style={{flex: 1, backgroundColor: colors.background}}>
       <KeyboardAvoidingView
-        className="flex-1"
+        style={{flex: 1}}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         {/* HEADER */}
         <View
-          className="bg-white shadow-sm flex-row items-center px-4"
-          style={{paddingTop: insets.top + 12, paddingBottom: 12}}
+          style={[
+            {
+              backgroundColor: colors.card,
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingHorizontal: 16,
+              paddingTop: insets.top + 12,
+              paddingBottom: 12,
+            },
+            shadows.sm,
+          ]}
         >
-          <TouchableOpacity onPress={() => navigation.goBack()} className="me-3 p-1" hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-            <Text className="text-[#1A4FBA] text-xl font-bold" style={{transform: [{scaleX: I18nManager.isRTL ? -1 : 1}]}}>←</Text>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={{marginRight: 12, padding: 4}}
+            hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+          >
+            <View style={{transform: [{scaleX: I18nManager.isRTL ? -1 : 1}]}}>
+              <Icon name="arrow-left" size={24} color={colors.primary} />
+            </View>
           </TouchableOpacity>
-          <Text className="text-lg font-bold text-[#1A1A2E] flex-1">{t('rfq.title')}</Text>
+          <Text style={{fontSize: 17, fontWeight: '700', color: colors.textPrimary, flex: 1}}>
+            {t('rfq.title')}
+          </Text>
+          <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+            <Icon name="close" size={22} color={colors.textSecondary} />
+          </TouchableOpacity>
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom: 40}}>
+
           {/* BROADCAST NOTICE */}
-          <View className="bg-[#E8EEFB] rounded-2xl p-4 mx-4 mt-4 flex-row items-start">
-            <Text style={{fontSize: 20}}>📢</Text>
-            <Text className="text-sm text-[#1A4FBA] ms-3 flex-1 leading-5">{t('rfq.broadcastNotice')}</Text>
+          <View
+            style={{
+              backgroundColor: '#EFF6FF',
+              borderWidth: 1,
+              borderColor: '#BFDBFE',
+              borderRadius: 16,
+              padding: 16,
+              marginHorizontal: 16,
+              marginTop: 16,
+              flexDirection: 'row',
+              alignItems: 'flex-start',
+            }}
+          >
+            <Icon name="bullhorn-outline" size={28} color={colors.primary} />
+            <View style={{flex: 1, marginLeft: 12}}>
+              <Text style={{fontSize: 13, fontWeight: '700', color: colors.primary}}>
+                Your RFQ broadcasts to all matching suppliers
+              </Text>
+              <Text style={{fontSize: 12, color: '#475569', marginTop: 3}}>
+                in your selected region
+              </Text>
+            </View>
           </View>
 
-          {/* COMMON FORM CARD */}
-          <View className="bg-white rounded-2xl shadow-sm mx-4 mt-4 p-4">
-            <View className="mb-4">
-              <Text className="text-[#1A1A2E] text-sm font-medium mb-1 ps-1">{t('rfq.description')}</Text>
-              <TextInput
-                className="bg-white border border-[#E5E7EB] rounded-xl p-4 text-[#1A1A2E] text-base"
-                value={description}
-                onChangeText={v => {setDescription(v); setErrors(e => ({...e, description: ''}));}}
-                multiline
-                numberOfLines={4}
-                textAlignVertical="top"
-                placeholder={t('rfq.description')}
-                placeholderTextColor="#9CA3AF"
-              />
+          {/* SECTION 1: Project Details */}
+          <View style={[{backgroundColor: colors.card, borderRadius: 16, padding: 16, marginHorizontal: 16, marginTop: 12}, shadows.sm]}>
+            <SectionHeader title="Project Details" iconName="file-document-outline" />
+
+            <View style={{marginBottom: 14}}>
+              <FieldLabel label={t('rfq.description')} />
+              <View
+                style={{
+                  backgroundColor: colors.background,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  borderRadius: 12,
+                  padding: 12,
+                }}
+              >
+                <TextInput
+                  style={{fontSize: 15, color: colors.textPrimary, minHeight: 80, textAlignVertical: 'top'}}
+                  value={description}
+                  onChangeText={v => {setDescription(v); setErrors(e => ({...e, description: ''}));}}
+                  multiline
+                  numberOfLines={4}
+                  placeholder={t('rfq.description')}
+                  placeholderTextColor={colors.muted}
+                />
+              </View>
               <ErrorText msg={errors.description ?? ''} />
             </View>
 
-            <View className="flex-row gap-3">
-              <View className="flex-1 mb-4">
-                <Text className="text-[#1A1A2E] text-sm font-medium mb-1 ps-1">{t('rfq.dateFrom')}</Text>
-                <TextInput
-                  className="bg-white border border-[#E5E7EB] rounded-xl h-[48px] px-4 text-[#1A1A2E] text-base"
-                  value={dateFrom}
-                  onChangeText={v => {setDateFrom(v); setErrors(e => ({...e, dateFrom: ''}));}}
-                  placeholder="DD/MM/YYYY"
-                  placeholderTextColor="#9CA3AF"
-                />
-                <ErrorText msg={errors.dateFrom ?? ''} />
-              </View>
-              <View className="flex-1 mb-4">
-                <Text className="text-[#1A1A2E] text-sm font-medium mb-1 ps-1">{t('rfq.dateTo')}</Text>
-                <TextInput
-                  className="bg-white border border-[#E5E7EB] rounded-xl h-[48px] px-4 text-[#1A1A2E] text-base"
-                  value={dateTo}
-                  onChangeText={v => {setDateTo(v); setErrors(e => ({...e, dateTo: ''}));}}
-                  placeholder="DD/MM/YYYY"
-                  placeholderTextColor="#9CA3AF"
-                />
-                <ErrorText msg={errors.dateTo ?? ''} />
-              </View>
-            </View>
-
-            <SelectField
-              label={t('home.country')}
-              value={country}
-              onPress={() =>
-                openPicker(t('common.selectCountry'), COUNTRY_OPTIONS, (v, _l) => {
-                  setCountry(v); setCity(''); setErrors(e => ({...e, country: ''})); closePicker();
-                })
-              }
-            />
-            <ErrorText msg={errors.country ?? ''} />
-
-            <SelectField
-              label={t('home.city')}
-              value={city}
-              onPress={() =>
-                openPicker(t('common.selectCity'), getCities(country), (v, _l) => {
-                  setCity(v); closePicker();
-                })
-              }
-            />
-
-            {/* Attach file */}
-            <View>
-              <TouchableOpacity
-                className="border-2 border-[#1A4FBA] h-[44px] rounded-xl items-center justify-center"
-                activeOpacity={0.7}
-                onPress={() => setFileName('requirements.pdf')}
-              >
-                <Text className="text-[#1A4FBA] text-sm font-medium">{t('rfq.attachFile')}</Text>
-              </TouchableOpacity>
-              {fileName && (
-                <View className="flex-row mt-2">
-                  <View className="bg-[#E8EEFB] rounded-full px-3 py-1 self-start flex-row items-center gap-1">
-                    <Text className="text-[#1A4FBA] text-xs">📎</Text>
-                    <Text className="text-[#1A4FBA] text-xs">{fileName}</Text>
-                    <TouchableOpacity onPress={() => setFileName(null)} hitSlop={{top: 4, bottom: 4, left: 4, right: 4}}>
-                      <Text className="text-[#1A4FBA] text-xs ms-1">✕</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              )}
-            </View>
-          </View>
-
-          {/* DYNAMIC CATEGORY CARD */}
-          <View className="bg-white rounded-2xl shadow-sm mx-4 mt-3 p-4">
-            {/* MANPOWER */}
+            {/* Manpower details */}
             {category === 'manpower' && (
               <>
-                <Text className="text-[#1A1A2E] text-sm font-bold mb-3">Manpower Details</Text>
-                <View className="mb-4">
-                  <Text className="text-[#1A1A2E] text-sm font-medium mb-1 ps-1">{t('home.quantity')}</Text>
-                  <TextInput
-                    className="bg-white border border-[#E5E7EB] rounded-xl h-[48px] px-4 text-[#1A1A2E] text-base"
-                    value={mpQty}
-                    onChangeText={setMpQty}
-                    keyboardType="number-pad"
-                    placeholder="1"
-                    placeholderTextColor="#9CA3AF"
-                  />
-                </View>
-                <SelectField
+                <IconTextInput
+                  label={t('home.quantity')}
+                  value={mpQty}
+                  onChange={setMpQty}
+                  iconName="counter"
+                  placeholder="1"
+                  keyboardType="number-pad"
+                />
+                <IconSelectField
                   label={t('home.role')}
                   value={mpRoleLabel}
+                  iconName="account-tie"
                   onPress={() =>
                     openPicker(t('home.role'), MP_ROLES, (v, l) => {setMpRole(v); setMpRoleLabel(l); closePicker();})
                   }
                 />
-                <SelectField
+                <IconSelectField
                   label={t('home.skillLevel')}
                   value={mpSkillLabel}
+                  iconName="school-outline"
                   onPress={() =>
                     openPicker(t('home.skillLevel'), SKILL_LEVELS, (v, l) => {setMpSkill(v); setMpSkillLabel(l); closePicker();})
                   }
                 />
-                <Text className="text-[#1A1A2E] text-sm font-medium mb-2">Secondary Skills</Text>
-                <View className="flex-row flex-wrap gap-2 mb-2">
+                <Text style={{fontSize: 12, fontWeight: '600', color: colors.textSecondary, marginBottom: 8}}>
+                  Secondary Skills
+                </Text>
+                <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8}}>
                   {MP_ROLES.map(r => {
                     const sel = mpSecondary.includes(r.value);
                     return (
                       <TouchableOpacity
                         key={r.value}
                         onPress={() => toggleSecondary(r.value)}
-                        className={`rounded-full px-3 py-1.5 ${sel ? 'bg-[#1A4FBA]' : 'bg-[#F5F7FA] border border-[#E5E7EB]'}`}
+                        style={{
+                          borderRadius: 20,
+                          paddingHorizontal: 12,
+                          paddingVertical: 6,
+                          backgroundColor: sel ? colors.primary : colors.background,
+                          borderWidth: 1,
+                          borderColor: sel ? colors.primary : colors.border,
+                        }}
                         activeOpacity={0.7}
                       >
-                        <Text className={`text-xs font-medium ${sel ? 'text-white' : 'text-[#6B7280]'}`}>{r.label}</Text>
+                        <Text style={{fontSize: 12, fontWeight: '500', color: sel ? '#FFFFFF' : colors.textSecondary}}>
+                          {r.label}
+                        </Text>
                       </TouchableOpacity>
                     );
                   })}
@@ -363,91 +504,91 @@ export default function RFQFormScreen() {
               </>
             )}
 
-            {/* MACHINERY */}
+            {/* Machinery details */}
             {category === 'machinery' && (
               <>
-                <Text className="text-[#1A1A2E] text-sm font-bold mb-3">Equipment Details</Text>
-                <SelectField
+                <IconSelectField
                   label={t('home.machinery')}
                   value={mchTypeLabel}
+                  iconName="crane"
                   onPress={() =>
                     openPicker(t('home.machinery'), MCH_TYPES, (v, l) => {setMchType(v); setMchTypeLabel(l); closePicker();})
                   }
                 />
-                <View className="mb-4">
-                  <Text className="text-[#1A1A2E] text-sm font-medium mb-1 ps-1">{t('home.quantity')}</Text>
-                  <TextInput
-                    className="bg-white border border-[#E5E7EB] rounded-xl h-[48px] px-4 text-[#1A1A2E] text-base"
-                    value={mchQty}
-                    onChangeText={setMchQty}
-                    keyboardType="number-pad"
-                    placeholder="1"
-                    placeholderTextColor="#9CA3AF"
-                  />
-                </View>
-                <View className="flex-row items-center justify-between mb-4">
-                  <Text className="text-[#1A1A2E] text-sm font-medium">{t('home.operatorNeeded')}</Text>
+                <IconTextInput
+                  label={t('home.quantity')}
+                  value={mchQty}
+                  onChange={setMchQty}
+                  iconName="counter"
+                  placeholder="1"
+                  keyboardType="number-pad"
+                />
+                <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14}}>
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                    <Icon name="account-hard-hat" size={20} color={colors.textSecondary} />
+                    <Text style={{fontSize: 14, color: colors.textPrimary, fontWeight: '500'}}>
+                      {t('home.operatorNeeded')}
+                    </Text>
+                  </View>
                   <Toggle value={mchOperator} onToggle={() => setMchOperator(v => !v)} />
                 </View>
-                <SelectField
+                <IconSelectField
                   label={t('home.duration')}
                   value={mchDurationLabel}
+                  iconName="clock-outline"
                   onPress={() =>
                     openPicker(t('home.duration'), DURATIONS, (v, l) => {setMchDuration(v); setMchDurationLabel(l); closePicker();})
                   }
                 />
-                <View className="mb-4">
-                  <Text className="text-[#1A1A2E] text-sm font-medium mb-1 ps-1">Capacity</Text>
-                  <TextInput
-                    className="bg-white border border-[#E5E7EB] rounded-xl h-[48px] px-4 text-[#1A1A2E] text-base"
-                    value={mchCapacity}
-                    onChangeText={setMchCapacity}
-                    placeholder="e.g. 20 tonnes"
-                    placeholderTextColor="#9CA3AF"
-                  />
-                </View>
+                <IconTextInput
+                  label="Capacity"
+                  value={mchCapacity}
+                  onChange={setMchCapacity}
+                  iconName="weight-kilogram"
+                  placeholder="e.g. 20 tonnes"
+                />
               </>
             )}
 
-            {/* VEHICLES */}
+            {/* Vehicle details */}
             {category === 'vehicles' && (
               <>
-                <Text className="text-[#1A1A2E] text-sm font-bold mb-3">Vehicle Details</Text>
-                <SelectField
+                <IconSelectField
                   label="Vehicle Type"
                   value={vehTypeLabel}
+                  iconName="truck"
                   onPress={() =>
                     openPicker('Vehicle Type', VEH_TYPES, (v, l) => {setVehType(v); setVehTypeLabel(l); closePicker();})
                   }
                 />
-                <View className="flex-row items-center justify-between mb-4">
-                  <Text className="text-[#1A1A2E] text-sm font-medium">{t('home.driverNeeded')}</Text>
+                <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14}}>
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                    <Icon name="steering" size={20} color={colors.textSecondary} />
+                    <Text style={{fontSize: 14, color: colors.textPrimary, fontWeight: '500'}}>
+                      {t('home.driverNeeded')}
+                    </Text>
+                  </View>
                   <Toggle value={vehDriver} onToggle={() => setVehDriver(v => !v)} />
                 </View>
-                <View className="mb-4">
-                  <Text className="text-[#1A1A2E] text-sm font-medium mb-1 ps-1">Rental Period</Text>
-                  <TextInput
-                    className="bg-white border border-[#E5E7EB] rounded-xl h-[48px] px-4 text-[#1A1A2E] text-base"
-                    value={vehPeriod}
-                    onChangeText={setVehPeriod}
-                    placeholder="e.g. 30 days"
-                    placeholderTextColor="#9CA3AF"
-                  />
-                </View>
-                <View className="mb-4">
-                  <Text className="text-[#1A1A2E] text-sm font-medium mb-1 ps-1">KM Limit</Text>
-                  <TextInput
-                    className="bg-white border border-[#E5E7EB] rounded-xl h-[48px] px-4 text-[#1A1A2E] text-base"
-                    value={vehKm}
-                    onChangeText={setVehKm}
-                    keyboardType="number-pad"
-                    placeholder="Unlimited"
-                    placeholderTextColor="#9CA3AF"
-                  />
-                </View>
-                <SelectField
+                <IconTextInput
+                  label="Rental Period"
+                  value={vehPeriod}
+                  onChange={setVehPeriod}
+                  iconName="calendar-range"
+                  placeholder="e.g. 30 days"
+                />
+                <IconTextInput
+                  label="KM Limit"
+                  value={vehKm}
+                  onChange={setVehKm}
+                  iconName="speedometer"
+                  placeholder="Unlimited"
+                  keyboardType="number-pad"
+                />
+                <IconSelectField
                   label="Seating Capacity"
                   value={vehSeatingLabel}
+                  iconName="seat-passenger"
                   onPress={() =>
                     openPicker('Seating Capacity', SEATING, (v, l) => {setVehSeating(v); setVehSeatingLabel(l); closePicker();})
                   }
@@ -455,135 +596,387 @@ export default function RFQFormScreen() {
               </>
             )}
 
-            {/* SHIPPING */}
+            {/* Shipping details */}
             {category === 'shipping' && (
               <>
-                <Text className="text-[#1A1A2E] text-sm font-bold mb-3">Shipment Details</Text>
-                <SelectField
+                <IconSelectField
                   label={t('home.packageType')}
                   value={shpTypeLabel}
+                  iconName="package-variant-closed"
                   onPress={() =>
                     openPicker(t('home.packageType'), SHP_TYPES, (v, l) => {setShpType(v); setShpTypeLabel(l); closePicker();})
                   }
                 />
-                <View className="mb-4">
-                  <Text className="text-[#1A1A2E] text-sm font-medium mb-1 ps-1">{t('home.weight')}</Text>
-                  <TextInput
-                    className="bg-white border border-[#E5E7EB] rounded-xl h-[48px] px-4 text-[#1A1A2E] text-base"
-                    value={shpWeight}
-                    onChangeText={setShpWeight}
-                    keyboardType="decimal-pad"
-                    placeholder="0"
-                    placeholderTextColor="#9CA3AF"
-                  />
-                </View>
-                <View className="flex-row justify-around mb-4">
+                <IconTextInput
+                  label={t('home.weight')}
+                  value={shpWeight}
+                  onChange={setShpWeight}
+                  iconName="weight-kilogram"
+                  placeholder="0 kg"
+                  keyboardType="decimal-pad"
+                />
+                <View style={{flexDirection: 'row', justifyContent: 'space-around', marginBottom: 14}}>
                   {[
                     {label: t('home.fragile'), val: shpFragile, fn: () => setShpFragile(v => !v)},
                     {label: t('home.hazmat'), val: shpHazmat, fn: () => setShpHazmat(v => !v)},
                     {label: t('home.coldChain'), val: shpColdChain, fn: () => setShpColdChain(v => !v)},
                   ].map(tog => (
-                    <View key={tog.label} className="items-center gap-2">
-                      <Text className="text-[#1A1A2E] text-xs font-medium text-center">{tog.label}</Text>
+                    <View key={tog.label} style={{alignItems: 'center', gap: 6}}>
+                      <Text style={{fontSize: 11, color: colors.textPrimary, fontWeight: '500', textAlign: 'center'}}>
+                        {tog.label}
+                      </Text>
                       <Toggle value={tog.val} onToggle={tog.fn} />
                     </View>
                   ))}
-                </View>
-                <View className="flex-row gap-3">
-                  <View className="flex-1">
-                    <SelectField label={t('home.pickupCountry')} value={shpPickupCountry}
-                      onPress={() => openPicker(t('common.selectCountry'), COUNTRY_OPTIONS, (v, _l) => {setShpPickupCountry(v); setShpPickupCity(''); closePicker();})} />
-                  </View>
-                  <View className="flex-1">
-                    <SelectField label={t('home.pickupCity')} value={shpPickupCity}
-                      onPress={() => openPicker(t('common.selectCity'), getCities(shpPickupCountry), (v, _l) => {setShpPickupCity(v); closePicker();})} />
-                  </View>
-                </View>
-                <View className="flex-row gap-3">
-                  <View className="flex-1">
-                    <SelectField label={t('home.dropoffCountry')} value={shpDropoffCountry}
-                      onPress={() => openPicker(t('common.selectCountry'), COUNTRY_OPTIONS, (v, _l) => {setShpDropoffCountry(v); setShpDropoffCity(''); closePicker();})} />
-                  </View>
-                  <View className="flex-1">
-                    <SelectField label={t('home.dropoffCity')} value={shpDropoffCity}
-                      onPress={() => openPicker(t('common.selectCity'), getCities(shpDropoffCountry), (v, _l) => {setShpDropoffCity(v); closePicker();})} />
-                  </View>
                 </View>
               </>
             )}
           </View>
 
-          {/* SIGNATURE & TERMS CARD */}
-          <View className="bg-white rounded-2xl shadow-sm mx-4 mt-3 p-4">
+          {/* SECTION 2: Timeline */}
+          <View style={[{backgroundColor: colors.card, borderRadius: 16, padding: 16, marginHorizontal: 16, marginTop: 12}, shadows.sm]}>
+            <SectionHeader title="Timeline" iconName="calendar-clock" />
+            <View style={{flexDirection: 'row', gap: 12}}>
+              <View style={{flex: 1}}>
+                <DatePickerInput
+                  label={t('rfq.dateFrom')}
+                  value={dateFrom}
+                  onChange={d => {setDateFrom(d); setErrors(e => ({...e, dateFrom: ''}));}}
+                  minimumDate={new Date()}
+                />
+                <ErrorText msg={errors.dateFrom ?? ''} />
+              </View>
+              <View style={{flex: 1}}>
+                <DatePickerInput
+                  label={t('rfq.dateTo')}
+                  value={dateTo}
+                  onChange={d => {setDateTo(d); setErrors(e => ({...e, dateTo: ''}));}}
+                  minimumDate={dateFrom ?? new Date()}
+                />
+                <ErrorText msg={errors.dateTo ?? ''} />
+              </View>
+            </View>
+          </View>
+
+          {/* SECTION 3: Location */}
+          <View style={[{backgroundColor: colors.card, borderRadius: 16, padding: 16, marginHorizontal: 16, marginTop: 12}, shadows.sm]}>
+            <SectionHeader title="Location" iconName="map-marker-outline" />
+            {category === 'shipping' ? (
+              <>
+                {/* Pickup */}
+                <View style={{marginBottom: 6}}>
+                  <FieldLabel label={i18n.language === 'ar' ? 'بلد الاستلام' : 'Pickup Country'} />
+                  <View style={{
+                    borderWidth: 1, borderColor: colors.border, borderRadius: 12,
+                    paddingHorizontal: 12, paddingVertical: 13,
+                    flexDirection: 'row', alignItems: 'center', gap: 8,
+                    backgroundColor: colors.background, marginBottom: 8,
+                  }}>
+                    <Text style={{fontSize: 20}}>🇴🇲</Text>
+                    <Text style={{fontSize: 15, color: colors.textPrimary, fontWeight: '600'}}>
+                      {i18n.language === 'ar' ? 'عُمان' : 'Oman'}
+                    </Text>
+                  </View>
+                  <IconSelectField
+                    label={t('home.pickupCity')}
+                    value={shpPickupCity}
+                    iconName="map-marker-outline"
+                    onPress={() =>
+                      openPicker(t('common.selectCity'), OMAN_CITIES, (v, _l) => {
+                        setShpPickupCity(v); closePicker();
+                      })
+                    }
+                  />
+                </View>
+                {/* Dropoff */}
+                <View style={{marginBottom: 6}}>
+                  <FieldLabel label={i18n.language === 'ar' ? 'بلد التسليم' : 'Dropoff Country'} />
+                  <View style={{
+                    borderWidth: 1, borderColor: colors.border, borderRadius: 12,
+                    paddingHorizontal: 12, paddingVertical: 13,
+                    flexDirection: 'row', alignItems: 'center', gap: 8,
+                    backgroundColor: colors.background, marginBottom: 8,
+                  }}>
+                    <Text style={{fontSize: 20}}>🇴🇲</Text>
+                    <Text style={{fontSize: 15, color: colors.textPrimary, fontWeight: '600'}}>
+                      {i18n.language === 'ar' ? 'عُمان' : 'Oman'}
+                    </Text>
+                  </View>
+                  <IconSelectField
+                    label={t('home.dropoffCity')}
+                    value={shpDropoffCity}
+                    iconName="map-marker-outline"
+                    onPress={() =>
+                      openPicker(t('common.selectCity'), OMAN_CITIES, (v, _l) => {
+                        setShpDropoffCity(v); closePicker();
+                      })
+                    }
+                  />
+                </View>
+              </>
+            ) : (
+              <>
+                <View style={{marginBottom: 14}}>
+                  <FieldLabel label={t('home.country')} />
+                  <View style={{
+                    borderWidth: 1, borderColor: colors.border, borderRadius: 12,
+                    paddingHorizontal: 12, paddingVertical: 13,
+                    flexDirection: 'row', alignItems: 'center', gap: 8,
+                    backgroundColor: colors.background,
+                  }}>
+                    <Text style={{fontSize: 20}}>🇴🇲</Text>
+                    <Text style={{fontSize: 15, color: colors.textPrimary, fontWeight: '600'}}>
+                      {i18n.language === 'ar' ? 'عُمان' : 'Oman'}
+                    </Text>
+                    <Text style={{fontSize: 12, color: colors.muted, marginStart: 4}}>
+                      {i18n.language === 'ar' ? '(البلد الوحيد المتاح)' : '(Only available country)'}
+                    </Text>
+                  </View>
+                </View>
+                <IconSelectField
+                  label={t('home.city')}
+                  value={city}
+                  iconName="map-marker-outline"
+                  onPress={() =>
+                    openPicker(t('common.selectCity'), OMAN_CITIES, (v, _l) => {
+                      setCity(v); closePicker();
+                    })
+                  }
+                />
+              </>
+            )}
+          </View>
+
+          {/* SECTION 4: Attachments */}
+          <View style={[{backgroundColor: colors.card, borderRadius: 16, padding: 16, marginHorizontal: 16, marginTop: 12}, shadows.sm]}>
+            <SectionHeader title="Attachments" iconName="paperclip" />
+            <TouchableOpacity
+              style={{
+                borderWidth: 2,
+                borderStyle: 'dashed',
+                borderColor: colors.border,
+                borderRadius: 12,
+                height: 100,
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+              }}
+              activeOpacity={0.7}
+              onPress={() => setFileName('requirements.pdf')}
+            >
+              <Icon name="cloud-upload-outline" size={32} color={colors.muted} />
+              <Text style={{fontSize: 13, color: colors.textSecondary}}>{t('rfq.attachFile')}</Text>
+            </TouchableOpacity>
+            {fileName && (
+              <View style={{flexDirection: 'row', marginTop: 10, flexWrap: 'wrap'}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: colors.primaryLight,
+                    borderRadius: 20,
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    gap: 6,
+                  }}
+                >
+                  <Icon name="file-document-outline" size={14} color={colors.primary} />
+                  <Text style={{fontSize: 12, color: colors.primary}}>{fileName}</Text>
+                  <TouchableOpacity
+                    onPress={() => setFileName(null)}
+                    hitSlop={{top: 4, bottom: 4, left: 4, right: 4}}
+                  >
+                    <Icon name="close" size={14} color={colors.primary} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+          </View>
+
+          {/* SECTION 5: Signature */}
+          <View style={[{backgroundColor: colors.card, borderRadius: 16, padding: 16, marginHorizontal: 16, marginTop: 12}, shadows.sm]}>
+            <SectionHeader title="Signature" iconName="signature-freehand" />
             <TouchableOpacity
               onPress={() => {setSigned(true); setErrors(e => ({...e, signed: ''}));}}
               activeOpacity={0.8}
-              className={`h-[90px] rounded-xl items-center justify-center ${
-                signed
-                  ? 'bg-[#DCFCE7] border-2 border-[#22C55E]'
-                  : 'border-2 border-dashed border-[#E5E7EB]'
-              }`}
+              style={{
+                height: 100,
+                borderRadius: 12,
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                borderWidth: 2,
+                borderStyle: signed ? 'solid' : 'dashed',
+                borderColor: signed ? colors.success : colors.border,
+                backgroundColor: signed ? colors.successLight : 'transparent',
+              }}
             >
               {signed ? (
-                <View className="items-center">
-                  <Text className="text-[#15803D] text-2xl font-bold">✓</Text>
-                  <Text className="text-[#15803D] text-sm font-medium mt-1">{t('rfq.signed')}</Text>
-                </View>
+                <>
+                  <Icon name="check-decagram" size={32} color={colors.success} />
+                  <Text style={{fontSize: 13, fontWeight: '600', color: colors.success}}>{t('rfq.signed')}</Text>
+                </>
               ) : (
-                <View className="items-center">
-                  <Text style={{fontSize: 24}}>✍️</Text>
-                  <Text className="text-[#9CA3AF] text-sm mt-1">{t('rfq.signHere')}</Text>
-                </View>
+                <>
+                  <Icon name="draw" size={32} color={colors.muted} />
+                  <Text style={{fontSize: 13, color: colors.textSecondary}}>{t('rfq.signHere')}</Text>
+                </>
               )}
             </TouchableOpacity>
             <ErrorText msg={errors.signed ?? ''} />
 
+            {/* Terms */}
             <TouchableOpacity
-              className="flex-row items-center gap-3 mt-4"
+              style={{flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 16}}
               onPress={() => {setTermsAccepted(v => !v); setErrors(e => ({...e, terms: ''}));}}
+              activeOpacity={0.8}
             >
-              <View className={`w-5 h-5 rounded border-2 items-center justify-center ${
-                termsAccepted ? 'bg-[#1A4FBA] border-[#1A4FBA]' : 'border-[#E5E7EB] bg-white'
-              }`}>
-                {termsAccepted && <Text className="text-white text-xs font-bold">✓</Text>}
+              <View
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: 6,
+                  borderWidth: 2,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: termsAccepted ? colors.primary : colors.card,
+                  borderColor: termsAccepted ? colors.primary : colors.border,
+                }}
+              >
+                {termsAccepted && <Icon name="check" size={14} color="#FFFFFF" />}
               </View>
-              <Text className="text-[#1A1A2E] text-sm flex-1">{t('rfq.terms')}</Text>
+              <Text style={{fontSize: 13, color: colors.textPrimary, flex: 1}}>{t('rfq.terms')}</Text>
             </TouchableOpacity>
             <ErrorText msg={errors.terms ?? ''} />
           </View>
 
           {/* SUBMIT */}
-          <TouchableOpacity
-            className="bg-[#1A4FBA] h-[52px] rounded-2xl items-center justify-center mx-4 mb-8 mt-4"
-            style={{shadowColor: '#1A4FBA', shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6}}
-            activeOpacity={0.8}
-            onPress={handleSubmit}
-          >
-            <Text className="text-white text-base font-semibold tracking-wide">{t('common.submitRFQ')}</Text>
-          </TouchableOpacity>
+          <View style={{paddingHorizontal: 16, marginTop: 16, marginBottom: 8}}>
+            <PremiumButton
+              title={t('common.submitRFQ')}
+              iconName="send"
+              variant="primary"
+              onPress={handleSubmit}
+            />
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
 
       {/* PICKER MODAL */}
       <Modal visible={picker.visible} transparent animationType="slide" onRequestClose={closePicker}>
-        <TouchableOpacity className="flex-1 bg-black/50 justify-end" activeOpacity={1} onPress={closePicker}>
-          <TouchableOpacity activeOpacity={1} className="bg-white rounded-t-3xl px-4 pt-3 pb-8">
-            <View className="w-10 h-1 bg-[#E5E7EB] rounded-full self-center mb-4" />
-            <Text className="text-[#1A1A2E] text-lg font-bold mb-3">{picker.title}</Text>
+        <TouchableOpacity
+          style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end'}}
+          activeOpacity={1}
+          onPress={closePicker}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            style={{
+              backgroundColor: colors.card,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              paddingHorizontal: 16,
+              paddingTop: 12,
+              paddingBottom: 32,
+            }}
+          >
+            <View
+              style={{
+                width: 40,
+                height: 4,
+                backgroundColor: colors.border,
+                borderRadius: 2,
+                alignSelf: 'center',
+                marginBottom: 16,
+              }}
+            />
+            <Text style={{fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 12}}>
+              {picker.title}
+            </Text>
             <FlatList
               data={picker.options}
               keyExtractor={item => item.value}
               style={{maxHeight: 340}}
-              ItemSeparatorComponent={() => <View className="h-px bg-[#F5F7FA]" />}
+              ItemSeparatorComponent={() => <View style={{height: 1, backgroundColor: colors.background}} />}
               renderItem={({item}) => (
-                <TouchableOpacity className="py-4 px-2" activeOpacity={0.7} onPress={() => picker.onSelect(item.value, item.label)}>
-                  <Text className="text-[#1A1A2E] text-base">{item.label}</Text>
+                <TouchableOpacity
+                  style={{paddingVertical: 16, paddingHorizontal: 8}}
+                  activeOpacity={0.7}
+                  onPress={() => picker.onSelect(item.value, item.label)}
+                >
+                  <Text style={{fontSize: 16, color: colors.textPrimary}}>{item.label}</Text>
                 </TouchableOpacity>
               )}
             />
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
+
+      {/* DEMO TOOLTIPS */}
+      <DemoTooltip
+        visible={isActive && currentStep === 'rfq_form'}
+        stepNumber={9} totalSteps={18}
+        title="Step 8: Fill RFQ Details"
+        description="Contractor enters project requirements: dates, quantity, specifications, attachments, and digital signature. All bilingual EN/AR."
+        onNext={nextStep}
+      />
+      <DemoTooltip
+        visible={isActive && currentStep === 'rfq_submitted'}
+        stepNumber={10} totalSteps={18}
+        title="Step 9: Broadcast Complete"
+        description="RFQ is broadcast to all matching suppliers simultaneously. Each supplier receives an instant notification in their portal."
+        onNext={() => {
+          nextStep();
+          navigation.navigate('RFQDetail', {rfqId: 'rfq-002'});
+        }}
+      />
+
+      <DemoFloatingBar />
+
+      {/* BROADCASTING OVERLAY */}
+      {isBroadcasting && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: 'rgba(20,61,155,0.94)',
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingHorizontal: 32,
+          }}
+        >
+          <ActivityIndicator size="large" color="#FFFFFF" />
+          <Text
+            style={{
+              color: '#FFFFFF',
+              fontSize: 20,
+              fontWeight: '700',
+              marginTop: 20,
+              textAlign: 'center',
+              writingDirection: i18n.language === 'ar' ? 'rtl' : 'ltr',
+            }}
+          >
+            {t('demo:messages.broadcastingToSuppliers')}
+          </Text>
+          <Text
+            style={{
+              color: 'rgba(255,255,255,0.78)',
+              fontSize: 13,
+              marginTop: 10,
+              textAlign: 'center',
+              lineHeight: 20,
+              writingDirection: i18n.language === 'ar' ? 'rtl' : 'ltr',
+            }}
+          >
+            {i18n.language === 'ar'
+              ? 'سيتلقى الموردون في عُمان طلبك خلال لحظات'
+              : 'Suppliers in Oman will receive your RFQ shortly'}
+          </Text>
+        </View>
+      )}
     </View>
   );
 }

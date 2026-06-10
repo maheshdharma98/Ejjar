@@ -1,0 +1,90 @@
+{
+  "categories": {
+    "manpower": "Manpower",
+    "machinery": "Machinery",
+    "shipping": "Shipping"
+  },
+  "subcategories": {
+    "plumber": "Plumber",
+    "electrician": "Electrician",
+    "carpenter": "Carpenter",
+    "mason": "Mason",
+    "welder": "Welder",
+    "painter": "Painter",
+    "excavator": "Excavator",
+    "crane": "Crane",
+    "forklift": "Forklift",
+    "bulldozer": "Bulldozer",
+    "concrete_mixer": "Concrete Mixer",
+    "pallet": "Pallet",
+    "container": "Container",
+    "refrigerated": "Refrigerated",
+    "flatbed": "Flatbed"
+  },
+  "rfqStatus": {
+    "draft": "Draft",
+    "broadcasted": "Broadcasted",
+    "receiving_quotes": "Receiving Quotes",
+    "negotiating": "Negotiating",
+    "accepted": "Accepted",
+    "rejected": "Rejected",
+    "expired": "Expired"
+  },
+  "jobStatus": {
+    "pending_start": "Pending Start",
+    "in_progress": "In Progress",
+    "paused": "Paused",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "disputed": "Disputed"
+  },
+  "actions": {
+    "createRFQ": "Create RFQ",
+    "sendRFQ": "Send RFQ",
+    "viewQuotes": "View Quotes",
+    "acceptQuote": "Accept Quote",
+    "rejectQuote": "Reject Quote",
+    "counterOffer": "Counter Offer",
+    "viewProfile": "View Profile",
+    "callSupplier": "Call Supplier",
+    "messageSupplier": "Message Supplier",
+    "viewJob": "View Job",
+    "completeJob": "Complete Job",
+    "cancelJob": "Cancel Job",
+    "viewDetails": "View Details"
+  },
+  "labels": {
+    "budget": "Budget",
+    "duration": "Duration",
+    "startDate": "Start Date",
+    "city": "City",
+    "rating": "Rating",
+    "totalJobs": "Total Jobs",
+    "responseTime": "Response Time",
+    "verified": "Verified",
+    "yearsExperience": "Years Experience",
+    "pricePerHour": "Price/Hour",
+    "pricePerDay": "Price/Day",
+    "availability": "Availability",
+    "available": "Available",
+    "busy": "Busy",
+    "unavailable": "Unavailable",
+    "certifications": "Certifications",
+    "description": "Description",
+    "progress": "Progress",
+    "milestones": "Milestones",
+    "amount": "Amount",
+    "finalAmount": "Final Amount",
+    "currency": "OMR"
+  },
+  "messages": {
+    "noRFQsYet": "No RFQs yet",
+    "noJobsYet": "No jobs yet",
+    "noQuotesYet": "No quotes received yet",
+    "rfqCreated": "RFQ created successfully",
+    "quoteAccepted": "Quote accepted",
+    "jobCompleted": "Job completed",
+    "searchingResources": "Searching resources...",
+    "broadcastingToSuppliers": "Broadcasting to suppliers..."
+  }
+}

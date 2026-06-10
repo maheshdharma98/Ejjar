@@ -25,7 +25,7 @@
     "required": "هذا الحقل مطلوب"
   },
   "home": {
-    "title": "ابحث عن موارد في الخليج",
+    "title": "موارد البناء في عُمان",
     "subtitle": "عمالة · معدات · شحن",
     "manpower": "القوى العاملة",
     "machinery": "الآليات والمركبات",
@@ -49,7 +49,12 @@
     "dropoffCountry": "دولة التسليم",
     "dropoffCity": "مدينة التسليم",
     "dateFrom": "من تاريخ",
-    "dateTo": "إلى تاريخ"
+    "dateTo": "إلى تاريخ",
+    "manpowerSubtitle": "سباكين، كهربائيين، نجارين وأكثر",
+    "machinerySubtitle": "حفارات، رافعات، خلاطات",
+    "shippingSubtitle": "بالتات، حاويات، نقل مبرد",
+    "searchPlaceholder": "ابحث عن خدمة...",
+    "comingSoon": "قريباً"
   },
   "search": {
     "title": "الموردون المتاحون",
@@ -119,7 +124,7 @@
   },
   "auth": {
     "welcome": "مرحباً بك في إيجار",
-    "subtitle": "منصة موارد الخليج",
+    "subtitle": "منصة موارد عُمان",
     "phoneLabel": "رقم الجوال",
     "phonePlaceholder": "+968 9XXX XXXX",
     "sendOtp": "إرسال رمز التحقق",
@@ -128,5 +133,44 @@
     "verify": "تحقق ومتابعة",
     "invalidOtp": "الرمز غير صحيح، يرجى المحاولة مرة أخرى",
     "resend": "إعادة الإرسال"
+  },
+  "app": {
+    "name": "إيجار",
+    "tagline": "موارد البناء في عُمان"
+  },
+  "nav": {
+    "home": "الرئيسية",
+    "rfqs": "الطلبات",
+    "jobs": "الأعمال",
+    "profile": "حسابي",
+    "notifications": "الإشعارات",
+    "settings": "الإعدادات"
+  },
+  "actions": {
+    "filter": "تصفية",
+    "next": "التالي",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "tryAgain": "حاول مرة أخرى",
+    "logout": "تسجيل الخروج"
+  },
+  "lang": {
+    "language": "اللغة",
+    "english": "English",
+    "arabic": "العربية"
+  },
+  "supplier": {
+    "sendRFQ": "إرسال طلب عرض سعر",
+    "verified": "موثّق",
+    "reviews": "تقييمات",
+    "yearsActive": "سنوات النشاط",
+    "yearsShort": "سنوات",
+    "responseTime": "وقت الاستجابة",
+    "about": "نبذة عن المورد",
+    "services": "الخدمات",
+    "perDay": "سعر اليوم",
+    "perHour": "سعر الساعة",
+    "certActive": "ساري المفعول",
+    "validUntil": "صالح حتى"
   }
 }

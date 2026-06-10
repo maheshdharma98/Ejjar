@@ -17,9 +17,18 @@ import type {RouteProp} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
 
 import type {RootStackParamList} from '../navigation/RootNavigator';
+import {useDemoStore} from '../store/demoStore';
+import DemoTooltip from '../components/common/DemoTooltip';
+import DemoFloatingBar from '../components/common/DemoFloatingBar';
 import type {Supplier} from '../types';
 import {useToastStore} from '../store/toastStore';
 import {maskSupplierName} from '../utils/masking';
+import Icon from '../components/common/Icon';
+import {colors, shadows} from '../theme/designSystem';
+import {categoryColors, categoryBgColors} from '../utils/iconMap';
+import CategoryIcon from '../components/common/CategoryIcon';
+import VerifiedBadge from '../components/common/VerifiedBadge';
+import PremiumButton from '../components/common/PremiumButton';
 
 interface RawJob {id: string; rfq_id: string; supplier_id: string; end_date: string; status: string; [k: string]: unknown}
 interface RawRFQ {id: string; category: string; [k: string]: unknown}
@@ -31,21 +40,38 @@ const suppliersData: Supplier[] = require('../../../shared/mock/suppliers.json')
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Route = RouteProp<RootStackParamList, 'Review'>;
 
+const RATING_LABELS = ['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent'];
+const RATING_COLORS = ['', colors.error, colors.error, colors.warning, colors.success, colors.success];
+
+const TAGS = [
+  {key: 'professional', label: 'Professional', icon: 'account-tie'},
+  {key: 'ontime', label: 'On Time', icon: 'clock-fast'},
+  {key: 'quality', label: 'Quality Work', icon: 'wrench'},
+  {key: 'communication', label: 'Good Communication', icon: 'chat-outline'},
+  {key: 'safe', label: 'Safety Conscious', icon: 'shield-check'},
+  {key: 'value', label: 'Great Value', icon: 'cash-multiple'},
+];
+
 export default function ReviewScreen() {
   const {t} = useTranslation();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
   const {showToast} = useToastStore();
+  const {isActive, currentStep, nextStep} = useDemoStore();
 
   const {jobId, supplierId} = route.params;
   const job = jobsData.find(j => j.id === jobId) ?? jobsData[0];
   const rfq = rfqsData.find(r => r.id === job.rfq_id);
   const supplier = suppliersData.find(s => s.id === (supplierId ?? job.supplier_id));
+  const category = rfq?.category ?? 'manpower';
+  const accentColor = categoryColors[category] ?? colors.primary;
+  const catBg = categoryBgColors[category] ?? colors.primaryLight;
 
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState('');
   const [photos, setPhotos] = useState<Set<number>>(new Set());
+  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
   const [errors, setErrors] = useState<{rating?: string; text?: string}>({});
 
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -54,9 +80,17 @@ export default function ReviewScreen() {
     setRating(star);
     setErrors(e => ({...e, rating: undefined}));
     Animated.sequence([
-      Animated.spring(scaleAnim, {toValue: 1.15, useNativeDriver: true, speed: 50}),
+      Animated.spring(scaleAnim, {toValue: 1.18, useNativeDriver: true, speed: 50}),
       Animated.spring(scaleAnim, {toValue: 1, useNativeDriver: true, speed: 20}),
     ]).start();
+  };
+
+  const toggleTag = (key: string) => {
+    setSelectedTags(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
   };
 
   const togglePhoto = (idx: number) => {
@@ -68,6 +102,7 @@ export default function ReviewScreen() {
   };
 
   const handleSubmit = () => {
+    if (isActive) { nextStep(); return; }
     const e: {rating?: string; text?: string} = {};
     if (rating === 0) e.rating = t('common.required');
     if (reviewText.trim().length < 20) e.text = 'Minimum 20 characters';
@@ -81,99 +116,197 @@ export default function ReviewScreen() {
     new Date(iso).toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'});
 
   const displayName = supplier ? maskSupplierName(supplier.id) : '●●●●';
+  const canSubmit = rating > 0 && reviewText.trim().length >= 20;
 
   return (
-    <View className="flex-1 bg-[#F5F7FA]">
-      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <View style={{flex: 1, backgroundColor: colors.background}}>
+      <KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         {/* HEADER */}
-        <View
-          className="bg-white shadow-sm flex-row items-center px-4"
-          style={{paddingTop: insets.top + 12, paddingBottom: 12}}
-        >
-          <TouchableOpacity onPress={() => navigation.goBack()} className="me-3 p-1" hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-            <Text className="text-[#1A4FBA] text-xl font-bold" style={{transform: [{scaleX: I18nManager.isRTL ? -1 : 1}]}}>←</Text>
+        <View style={[{
+          backgroundColor: colors.card,
+          paddingTop: insets.top + 12, paddingBottom: 12, paddingHorizontal: 16,
+          flexDirection: 'row', alignItems: 'center',
+        }, shadows.sm]}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={{marginRight: 12, padding: 4}}
+            hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+            activeOpacity={0.7}
+          >
+            <View style={{transform: [{scaleX: I18nManager.isRTL ? -1 : 1}]}}>
+              <Icon name="arrow-left" size={24} color={colors.primary} />
+            </View>
           </TouchableOpacity>
-          <Text className="text-lg font-bold text-[#1A1A2E] flex-1">{t('review.title')}</Text>
+          <Text style={{fontSize: 18, fontWeight: '700', color: colors.textPrimary, flex: 1}}>
+            {t('review.title')}
+          </Text>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom: 40}}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{paddingBottom: 40}}
+        >
           {/* SUPPLIER CARD */}
-          <View className="bg-white rounded-2xl shadow-sm mx-4 mt-4 p-4">
-            <View className="flex-row items-center justify-between">
-              <Text className="text-[#1A1A2E] text-base font-bold flex-1 me-2" numberOfLines={1}>
+          <View style={[{
+            backgroundColor: colors.card, borderRadius: 20,
+            marginHorizontal: 16, marginTop: 16, padding: 16,
+            flexDirection: 'row', alignItems: 'center', gap: 12,
+          }, shadows.md]}>
+            <CategoryIcon category={category} size={28} withBackground />
+            <View style={{flex: 1}}>
+              <Text style={{fontSize: 15, fontWeight: '700', color: colors.textPrimary}} numberOfLines={1}>
                 {displayName}
               </Text>
-              <View className="bg-[#E8EEFB] rounded-full px-3 py-1">
-                <Text className="text-[#1A4FBA] text-xs font-medium capitalize">
-                  {rfq?.category ?? 'service'}
-                </Text>
-              </View>
+              <Text style={{fontSize: 12, color: colors.textSecondary, marginTop: 2}}>
+                {fmtDate(job.end_date)}
+              </Text>
             </View>
-            <Text className="text-[#6B7280] text-xs mt-1">{fmtDate(job.end_date)}</Text>
+            {supplier?.verified && <VerifiedBadge />}
+            <View style={{
+              backgroundColor: catBg, borderRadius: 20,
+              paddingHorizontal: 10, paddingVertical: 4,
+            }}>
+              <Text style={{fontSize: 11, fontWeight: '600', color: accentColor, textTransform: 'capitalize'}}>
+                {category}
+              </Text>
+            </View>
           </View>
 
           {/* STAR RATING */}
-          <View className="bg-white rounded-2xl shadow-sm mx-4 mt-4 p-6">
-            <Text className="text-[#1A1A2E] text-base font-semibold text-center mb-4">
+          <View style={[{
+            backgroundColor: colors.card, borderRadius: 20,
+            marginHorizontal: 16, marginTop: 12, padding: 20,
+            alignItems: 'center',
+          }, shadows.sm]}>
+            <Text style={{fontSize: 16, fontWeight: '600', color: colors.textPrimary, marginBottom: 4}}>
               How was the service?
             </Text>
-            <Animated.View
-              className="flex-row justify-center gap-3"
-              style={{transform: [{scale: scaleAnim}]}}
-            >
+            {rating > 0 && (
+              <Text style={{
+                fontSize: 14, fontWeight: '600',
+                color: RATING_COLORS[rating],
+                marginBottom: 12,
+              }}>
+                {RATING_LABELS[rating]}
+              </Text>
+            )}
+            {rating === 0 && <View style={{height: 30}} />}
+
+            <Animated.View style={{flexDirection: 'row', gap: 10, transform: [{scale: scaleAnim}]}}>
               {[1, 2, 3, 4, 5].map(star => (
                 <TouchableOpacity key={star} onPress={() => handleStarPress(star)} activeOpacity={0.7}>
-                  <Text style={{fontSize: 40, color: star <= rating ? '#F59E0B' : '#E5E7EB'}}>★</Text>
+                  <Icon
+                    name={star <= rating ? 'star' : 'star-outline'}
+                    size={40}
+                    color={star <= rating ? colors.warning : '#D1D5DB'}
+                  />
                 </TouchableOpacity>
               ))}
             </Animated.View>
+
             {!!errors.rating && (
-              <Text className="text-[#EF4444] text-xs text-center mt-2">{errors.rating}</Text>
+              <Text style={{fontSize: 12, color: colors.error, marginTop: 8}}>{errors.rating}</Text>
             )}
           </View>
 
+          {/* TAGS */}
+          <View style={[{
+            backgroundColor: colors.card, borderRadius: 20,
+            marginHorizontal: 16, marginTop: 12, padding: 16,
+          }, shadows.sm]}>
+            <Text style={{fontSize: 14, fontWeight: '600', color: colors.textPrimary, marginBottom: 12}}>
+              What did you like?
+            </Text>
+            <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 8}}>
+              {TAGS.map(tag => {
+                const isSelected = selectedTags.has(tag.key);
+                return (
+                  <TouchableOpacity
+                    key={tag.key}
+                    onPress={() => toggleTag(tag.key)}
+                    style={{
+                      flexDirection: 'row', alignItems: 'center', gap: 6,
+                      borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7,
+                      backgroundColor: isSelected ? colors.primaryLight : '#F8FAFC',
+                      borderWidth: 1.5,
+                      borderColor: isSelected ? colors.primary : colors.border,
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Icon name={tag.icon} size={13} color={isSelected ? colors.primary : colors.textSecondary} />
+                    <Text style={{
+                      fontSize: 12, fontWeight: '600',
+                      color: isSelected ? colors.primary : colors.textSecondary,
+                    }}>
+                      {tag.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
           {/* REVIEW TEXT */}
-          <View className="mx-4 mt-3">
+          <View style={{marginHorizontal: 16, marginTop: 12}}>
             <TextInput
-              className="bg-white border border-[#E5E7EB] rounded-2xl p-4 text-[#1A1A2E] text-base shadow-sm"
+              style={[{
+                backgroundColor: colors.card, borderRadius: 16,
+                borderWidth: 1.5,
+                borderColor: errors.text ? colors.error : colors.border,
+                padding: 14, fontSize: 14, color: colors.textPrimary,
+                minHeight: 120, textAlignVertical: 'top',
+              }, shadows.sm]}
               value={reviewText}
               onChangeText={v => {setReviewText(v); setErrors(e => ({...e, text: undefined}));}}
               multiline
               numberOfLines={5}
-              textAlignVertical="top"
               placeholder={t('review.placeholder')}
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.muted}
             />
-            <View className="flex-row justify-between mt-1 px-1">
-              {!!errors.text ? (
-                <Text className="text-[#EF4444] text-xs">{errors.text}</Text>
+            <View style={{flexDirection: 'row', justifyContent: 'space-between', marginTop: 5, paddingHorizontal: 4}}>
+              {errors.text ? (
+                <Text style={{fontSize: 11, color: colors.error}}>{errors.text}</Text>
               ) : (
-                <Text className="text-[#9CA3AF] text-xs">Min. 20 characters</Text>
+                <Text style={{fontSize: 11, color: colors.muted}}>Min. 20 characters</Text>
               )}
-              <Text className="text-[#9CA3AF] text-xs">{reviewText.length}</Text>
+              <Text style={{fontSize: 11, color: colors.muted}}>{reviewText.length}/500</Text>
             </View>
           </View>
 
           {/* PHOTOS */}
-          <View className="bg-white rounded-2xl shadow-sm mx-4 mt-3 p-4">
-            <Text className="text-[#1A1A2E] text-sm font-semibold mb-3">Add Photos</Text>
-            <View className="flex-row gap-3">
+          <View style={[{
+            backgroundColor: colors.card, borderRadius: 20,
+            marginHorizontal: 16, marginTop: 12, padding: 16,
+          }, shadows.sm]}>
+            <Text style={{fontSize: 14, fontWeight: '600', color: colors.textPrimary, marginBottom: 12}}>
+              Add Photos
+            </Text>
+            <View style={{flexDirection: 'row', gap: 12}}>
               {[0, 1, 2].map(idx => {
                 const selected = photos.has(idx);
                 return (
                   <TouchableOpacity
                     key={idx}
                     onPress={() => togglePhoto(idx)}
-                    className="w-24 h-24 rounded-xl items-center justify-center border-2"
                     style={{
-                      borderStyle: 'dashed',
-                      borderColor: selected ? '#1A4FBA' : '#E5E7EB',
-                      backgroundColor: selected ? '#E8EEFB' : '#FFFFFF',
+                      flex: 1, aspectRatio: 1, borderRadius: 14,
+                      alignItems: 'center', justifyContent: 'center',
+                      borderWidth: 2, borderStyle: 'dashed',
+                      borderColor: selected ? colors.primary : colors.border,
+                      backgroundColor: selected ? colors.primaryLight : '#F8FAFC',
                     }}
                     activeOpacity={0.7}
                   >
-                    <Text style={{fontSize: 24, color: selected ? '#1A4FBA' : '#9CA3AF'}}>
-                      {selected ? '✓' : '+'}
+                    <Icon
+                      name={selected ? 'check-circle' : 'camera-plus-outline'}
+                      size={26}
+                      color={selected ? colors.primary : colors.muted}
+                    />
+                    <Text style={{
+                      fontSize: 10, fontWeight: '500', marginTop: 4,
+                      color: selected ? colors.primary : colors.muted,
+                    }}>
+                      {selected ? 'Added' : 'Photo'}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -182,16 +315,37 @@ export default function ReviewScreen() {
           </View>
 
           {/* SUBMIT */}
-          <TouchableOpacity
-            className="bg-[#1A4FBA] h-[52px] rounded-2xl items-center justify-center mx-4 mt-4 mb-8"
-            style={{shadowColor: '#1A4FBA', shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6}}
-            activeOpacity={0.85}
-            onPress={handleSubmit}
-          >
-            <Text className="text-white text-base font-semibold tracking-wide">{t('review.submit')}</Text>
-          </TouchableOpacity>
+          <View style={{marginHorizontal: 16, marginTop: 20, opacity: canSubmit ? 1 : 0.5}}>
+            <PremiumButton
+              title={t('review.submit')}
+              iconName="send"
+              variant="primary"
+              onPress={handleSubmit}
+            />
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* DEMO TOOLTIPS */}
+      <DemoTooltip
+        visible={isActive && currentStep === 'review_screen'}
+        stepNumber={17} totalSteps={18}
+        title="Step 16: Leave Review"
+        description="Contractor rates the supplier 1–5 stars with comments and photos. Reviews are public and help future contractors choose reliable suppliers."
+        onNext={nextStep}
+      />
+      <DemoTooltip
+        visible={isActive && currentStep === 'review_submitted'}
+        stepNumber={18} totalSteps={18}
+        title="Tour Complete!"
+        description="That's the complete EJJAR flow: Search → Broadcast → Compare → Accept → Track → Complete → Review. All in one platform, fully bilingual, across Oman."
+        onNext={() => {
+          useDemoStore.getState().exitDemo();
+          navigation.navigate('Home' as never);
+        }}
+      />
+
+      <DemoFloatingBar />
     </View>
   );
 }

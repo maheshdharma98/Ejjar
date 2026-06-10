@@ -1,17 +1,23 @@
 import React, {useRef, useState} from 'react';
 import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
   Modal,
-  View,
+  Platform,
   Text,
   TextInput,
   TouchableOpacity,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
+  View,
 } from 'react-native';
 import {useTranslation} from 'react-i18next';
 import {useAuthStore} from '../../store/authStore';
 import {maskPhone} from '../../utils/masking';
+import Icon from './Icon';
+import {colors, shadows} from '../../theme/designSystem';
+import PremiumButton from './PremiumButton';
+import {useDemoStore} from '../../store/demoStore';
+import DemoTooltip from './DemoTooltip';
+import EjjarLogo from './EjjarLogo';
 
 interface Props {
   isOpen: boolean;
@@ -22,6 +28,7 @@ interface Props {
 export default function LoginBottomSheet({isOpen, onClose, onSuccess}: Props) {
   const {t} = useTranslation();
   const {login, isLoading} = useAuthStore();
+  const {isActive, currentStep, nextStep} = useDemoStore();
 
   const [step, setStep] = useState<1 | 2>(1);
   const [phone, setPhone] = useState('');
@@ -81,6 +88,7 @@ export default function LoginBottomSheet({isOpen, onClose, onSuccess}: Props) {
   };
 
   return (
+    <>
     <Modal
       visible={isOpen}
       transparent
@@ -88,124 +96,200 @@ export default function LoginBottomSheet({isOpen, onClose, onSuccess}: Props) {
       onRequestClose={handleClose}
     >
       <KeyboardAvoidingView
-        className="flex-1"
+        style={{flex: 1}}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <TouchableOpacity
-          className="flex-1 bg-black/50 justify-end"
+          style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end'}}
           activeOpacity={1}
           onPress={handleClose}
         >
-          <TouchableOpacity
-            activeOpacity={1}
-            className="bg-white rounded-t-3xl px-4 pt-3 pb-10"
-          >
-            {/* Handle bar */}
-            <View className="w-10 h-1 bg-[#E5E7EB] rounded-full self-center mb-6" />
+          <TouchableOpacity activeOpacity={1}>
+            <View style={[{
+              backgroundColor: colors.card,
+              borderTopLeftRadius: 28, borderTopRightRadius: 28,
+              paddingHorizontal: 24, paddingBottom: 40,
+            }, shadows.md]}>
+              {/* Handle bar */}
+              <View style={{
+                width: 40, height: 4, backgroundColor: '#D1D5DB',
+                borderRadius: 2, alignSelf: 'center', marginTop: 12, marginBottom: 24,
+              }} />
 
-            {step === 1 ? (
-              <>
-                {/* Logo */}
-                <Text className="text-[#1A4FBA] text-2xl font-bold text-center mb-1">
-                  EJJAR
-                </Text>
-                <Text className="text-[#1A1A2E] text-[22px] font-bold text-center mb-1">
-                  {t('auth.welcome')}
-                </Text>
-                <Text className="text-[#6B7280] text-sm text-center mb-8">
-                  {t('auth.subtitle')}
-                </Text>
-
-                {/* Phone input */}
-                <View className="mb-6">
-                  <Text className="text-[#1A1A2E] text-sm font-medium mb-1 ps-1">
-                    {t('auth.phoneLabel')}
-                  </Text>
-                  <TextInput
-                    className="bg-white border border-[#E5E7EB] rounded-xl h-[48px] px-4 text-[#1A1A2E] text-base"
-                    value={phone}
-                    onChangeText={setPhone}
-                    placeholder={t('auth.phonePlaceholder')}
-                    placeholderTextColor="#9CA3AF"
-                    keyboardType="phone-pad"
-                    autoFocus
-                  />
-                </View>
-
-                <TouchableOpacity
-                  className="bg-[#1A4FBA] h-[52px] rounded-2xl items-center justify-center mx-4"
-                  style={{shadowColor: '#1A4FBA', shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6}}
-                  activeOpacity={0.85}
-                  onPress={handleSendOtp}
-                  disabled={phone.trim().length < 8}
-                >
-                  <Text className="text-white text-base font-semibold tracking-wide">
-                    {t('auth.sendOtp')}
-                  </Text>
-                </TouchableOpacity>
-              </>
-            ) : (
-              <>
-                <Text className="text-[#1A1A2E] text-[22px] font-bold text-center mb-1">
-                  {t('auth.otpLabel')}
-                </Text>
-                <Text className="text-[#6B7280] text-sm text-center mb-8">
-                  {t('auth.otpSent')} {maskPhone(phone)}
-                </Text>
-
-                {/* OTP boxes */}
-                <View className="flex-row justify-center gap-3 mb-8">
-                  {otp.map((digit, i) => (
-                    <TextInput
-                      key={i}
-                      ref={el => {
-                        otpRefs.current[i] = el;
-                      }}
-                      className={`w-[48px] h-[48px] border rounded-xl text-center text-[#1A1A2E] text-lg font-bold ${
-                        digit ? 'border-[#1A4FBA] bg-[#E8EEFB]' : 'border-[#E5E7EB] bg-white'
-                      }`}
-                      value={digit}
-                      onChangeText={text => handleOtpChange(text, i)}
-                      onKeyPress={({nativeEvent}) =>
-                        handleOtpKeyPress(nativeEvent.key, i)
-                      }
-                      keyboardType="number-pad"
-                      maxLength={1}
-                      selectTextOnFocus
-                      autoFocus={i === 0}
-                    />
-                  ))}
-                </View>
-
-                <TouchableOpacity
-                  className="bg-[#1A4FBA] h-[52px] rounded-2xl items-center justify-center shadow-md mx-4 mb-4"
-                  activeOpacity={0.8}
-                  onPress={() => handleVerify()}
-                  disabled={isLoading || otp.join('').length !== 6}
-                >
-                  {isLoading ? (
-                    <ActivityIndicator color="#FFFFFF" />
-                  ) : (
-                    <Text className="text-white text-base font-semibold tracking-wide">
-                      {t('auth.verify')}
+              {step === 1 ? (
+                <>
+                  {/* Brand */}
+                  <View style={{alignItems: 'center', marginBottom: 24}}>
+                    <EjjarLogo variant="black" width={52} height={68} style={{marginBottom: 8}} />
+                    <Text style={{fontSize: 22, fontWeight: '700', color: colors.textPrimary, marginTop: 4}}>
+                      {t('auth.welcome')}
                     </Text>
-                  )}
-                </TouchableOpacity>
+                    <Text style={{fontSize: 14, color: colors.textSecondary, marginTop: 4, textAlign: 'center'}}>
+                      {t('auth.subtitle')}
+                    </Text>
+                  </View>
 
-                <TouchableOpacity
-                  className="items-center py-2"
-                  activeOpacity={0.7}
-                  onPress={handleResend}
-                >
-                  <Text className="text-[#1A4FBA] text-sm font-medium">
-                    {t('auth.resend')}
-                  </Text>
-                </TouchableOpacity>
-              </>
-            )}
+                  {/* Security notice */}
+                  <View style={{
+                    flexDirection: 'row', alignItems: 'center', gap: 10,
+                    backgroundColor: colors.primaryLight, borderRadius: 12, padding: 12, marginBottom: 20,
+                  }}>
+                    <View style={{
+                      width: 36, height: 36, borderRadius: 18,
+                      backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Icon name="shield-check" size={18} color="#FFFFFF" />
+                    </View>
+                    <View style={{flex: 1}}>
+                      <Text style={{fontSize: 13, fontWeight: '600', color: colors.primary}}>
+                        Secure Login
+                      </Text>
+                      <Text style={{fontSize: 11, color: colors.textSecondary, marginTop: 1}}>
+                        OTP verified · No password needed
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Phone input */}
+                  <View style={{marginBottom: 20}}>
+                    <Text style={{
+                      fontSize: 13, fontWeight: '600', color: colors.textPrimary,
+                      marginBottom: 8, paddingLeft: 4,
+                    }}>
+                      {t('auth.phoneLabel')}
+                    </Text>
+                    <View style={{
+                      flexDirection: 'row', alignItems: 'center',
+                      borderWidth: 1.5, borderColor: phone.length >= 8 ? colors.primary : colors.border,
+                      borderRadius: 14, backgroundColor: '#F8FAFC',
+                      paddingHorizontal: 14, height: 52,
+                    }}>
+                      <Icon name="phone" size={18} color={colors.textSecondary} />
+                      <TextInput
+                        style={{
+                          flex: 1, marginLeft: 10, fontSize: 15,
+                          color: colors.textPrimary,
+                        }}
+                        value={phone}
+                        onChangeText={setPhone}
+                        placeholder={t('auth.phonePlaceholder')}
+                        placeholderTextColor={colors.muted}
+                        keyboardType="phone-pad"
+                        autoFocus
+                      />
+                      {phone.length >= 8 && (
+                        <Icon name="check-circle" size={18} color={colors.success} />
+                      )}
+                    </View>
+                  </View>
+
+                  <PremiumButton
+                    title={t('auth.sendOtp')}
+                    iconName="send"
+                    variant="primary"
+                    onPress={handleSendOtp}
+                  />
+                </>
+              ) : (
+                <>
+                  {/* OTP header */}
+                  <View style={{alignItems: 'center', marginBottom: 24}}>
+                    <View style={{
+                      width: 56, height: 56, borderRadius: 28,
+                      backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center',
+                      marginBottom: 12,
+                    }}>
+                      <Icon name="phone" size={26} color={colors.primary} />
+                    </View>
+                    <Text style={{fontSize: 20, fontWeight: '700', color: colors.textPrimary}}>
+                      {t('auth.otpLabel')}
+                    </Text>
+                    <Text style={{fontSize: 13, color: colors.textSecondary, marginTop: 5, textAlign: 'center'}}>
+                      {t('auth.otpSent')} {maskPhone(phone)}
+                    </Text>
+                  </View>
+
+                  {/* OTP boxes */}
+                  <View style={{flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: 24}}>
+                    {otp.map((digit, i) => (
+                      <TextInput
+                        key={i}
+                        ref={el => {otpRefs.current[i] = el;}}
+                        style={{
+                          width: 48, height: 56, borderRadius: 12, textAlign: 'center',
+                          fontSize: 20, fontWeight: '700', color: colors.textPrimary,
+                          borderWidth: 2,
+                          borderColor: digit ? colors.primary : colors.border,
+                          backgroundColor: digit ? colors.primaryLight : '#F8FAFC',
+                        }}
+                        value={digit}
+                        onChangeText={text => handleOtpChange(text, i)}
+                        onKeyPress={({nativeEvent}) => handleOtpKeyPress(nativeEvent.key, i)}
+                        keyboardType="number-pad"
+                        maxLength={1}
+                        selectTextOnFocus
+                        autoFocus={i === 0}
+                      />
+                    ))}
+                  </View>
+
+                  {isLoading ? (
+                    <View style={{
+                      height: 52, borderRadius: 14, backgroundColor: colors.primary,
+                      alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <ActivityIndicator color="#FFFFFF" />
+                    </View>
+                  ) : (
+                    <View style={{opacity: otp.join('').length === 6 ? 1 : 0.5}}>
+                      <PremiumButton
+                        title={t('auth.verify')}
+                        iconName="check-circle"
+                        variant="primary"
+                        onPress={() => handleVerify()}
+                      />
+                    </View>
+                  )}
+
+                  <TouchableOpacity
+                    style={{
+                      flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+                      gap: 6, marginTop: 14, paddingVertical: 8,
+                    }}
+                    activeOpacity={0.7}
+                    onPress={handleResend}
+                  >
+                    <Icon name="history" size={14} color={colors.primary} />
+                    <Text style={{fontSize: 14, color: colors.primary, fontWeight: '500'}}>
+                      {t('auth.resend')}
+                    </Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
           </TouchableOpacity>
         </TouchableOpacity>
       </KeyboardAvoidingView>
     </Modal>
+
+    <DemoTooltip
+      visible={isActive && currentStep === 'login_phone'}
+      stepNumber={7} totalSteps={18}
+      title="Step 6: Secure Login"
+      description="EJJAR uses phone OTP authentication. No passwords needed. The contractor enters their Oman mobile number to receive a verification code."
+      onNext={nextStep}
+    />
+    <DemoTooltip
+      visible={isActive && currentStep === 'login_otp'}
+      stepNumber={8} totalSteps={18}
+      title="Step 7: Verify Identity"
+      description="6-digit OTP sent via SMS. Once verified, contractor identity is established and they can submit RFQs."
+      onNext={() => {
+        nextStep();
+        onSuccess();
+        onClose();
+      }}
+    />
+    </>
   );
 }

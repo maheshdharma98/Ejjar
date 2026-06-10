@@ -1,10 +1,11 @@
 import React from 'react';
-import {Text, View} from 'react-native';
+import {View} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import HomeScreen from '../screens/HomeScreen';
 import SearchResultsScreen from '../screens/SearchResultsScreen';
+import SubcategoryGridScreen from '../screens/SubcategoryGridScreen';
 import SupplierProfileScreen from '../screens/SupplierProfileScreen';
 import RFQFormScreen from '../screens/RFQFormScreen';
 import RFQDetailScreen from '../screens/RFQDetailScreen';
@@ -14,14 +15,16 @@ import NotificationsScreen from '../screens/NotificationsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import MyRFQsScreen from '../screens/MyRFQsScreen';
 import MyJobsScreen from '../screens/MyJobsScreen';
+import Icon from '../components/common/Icon';
 
-// Active RFQ count for tab badge — computed from static mock data
+// Active RFQ count for tab badge
 const _rfqsAll: Array<{status: string}> = require('../../../shared/mock/rfqs.json');
 const _ACTIVE_SET = new Set(['new', 'supplier_responded', 'negotiation', 'accepted', 'confirmed']);
 const ACTIVE_RFQ_COUNT = _rfqsAll.filter(r => _ACTIVE_SET.has(r.status)).length;
 
 export type RootStackParamList = {
   HomeTabs: undefined;
+  SubcategoryGrid: {categoryId: string};
   SearchResults: {category: string; params: Record<string, unknown>};
   SupplierProfile: {supplierId: string};
   RFQForm: {category: string; params: Record<string, unknown>};
@@ -43,42 +46,35 @@ export type TabParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 
-function TabIcon({emoji, focused}: {emoji: string; focused: boolean}) {
+interface TabIconProps {
+  iconName: string;
+  focused: boolean;
+}
+
+function TabIcon({iconName, focused}: TabIconProps) {
   return (
-    <View style={{alignItems: 'center', paddingTop: 2}}>
-      {/* Indicator pill above the icon */}
-      <View
-        style={{
-          width: 20,
-          height: 3,
-          borderRadius: 2,
-          backgroundColor: focused ? '#1A4FBA' : 'transparent',
-          marginBottom: 3,
-        }}
+    <View style={{
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: 52,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: focused ? 'rgba(26,26,46,0.88)' : 'transparent',
+      shadowColor: focused ? '#1A1A2E' : 'transparent',
+      shadowOffset: {width: 0, height: 4},
+      shadowOpacity: focused ? 0.35 : 0,
+      shadowRadius: 8,
+    }}>
+      <Icon
+        name={iconName}
+        size={22}
+        color={focused ? '#FFFFFF' : '#1A1A2E'}
       />
-      <Text style={{fontSize: 22}}>{emoji}</Text>
     </View>
   );
 }
 
-function TabLabel({label, focused}: {label: string; focused: boolean}) {
-  return (
-    <Text
-      style={{
-        fontSize: 11,
-        fontWeight: focused ? '600' : '400',
-        color: focused ? '#1A4FBA' : '#9CA3AF',
-        marginBottom: 4,
-        marginTop: 2,
-      }}
-    >
-      {label}
-    </Text>
-  );
-}
-
 function HomeTabs() {
-  // My RFQs tab badge = active RFQ count; bell badge on HomeScreen uses appStore.unreadCount
   const rfqBadge = ACTIVE_RFQ_COUNT > 0 ? ACTIVE_RFQ_COUNT : undefined;
 
   return (
@@ -86,37 +82,55 @@ function HomeTabs() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
+          position: 'absolute',
+          bottom: 20,
+          left: 24,
+          right: 24,
           height: 64,
-          borderTopWidth: 1,
-          borderTopColor: '#E5E7EB',
-          paddingBottom: 4,
-          paddingTop: 8,
+          borderRadius: 32,
+          backgroundColor: 'rgba(255,255,255,0.22)',
+          borderWidth: 1.5,
+          borderTopWidth: 1.5,
+          borderColor: 'rgba(255,255,255,0.55)',
+          shadowColor: '#0F172A',
+          shadowOffset: {width: 0, height: 12},
+          shadowOpacity: 0.18,
+          shadowRadius: 32,
+          elevation: 20,
+          paddingBottom: 0,
+          paddingTop: 0,
+          overflow: 'hidden',
         },
-        tabBarActiveTintColor: '#1A4FBA',
-        tabBarInactiveTintColor: '#9CA3AF',
-        tabBarShowLabel: true,
+        tabBarActiveTintColor: '#1A1A2E',
+        tabBarInactiveTintColor: '#6B7280',
+        tabBarShowLabel: false,
+        tabBarHideOnKeyboard: true,
       }}
     >
       <Tab.Screen
         name="Home"
         component={HomeScreen}
         options={{
-          tabBarIcon: ({focused}) => <TabIcon emoji="🏠" focused={focused} />,
-          tabBarLabel: ({focused}) => <TabLabel label="Home" focused={focused} />,
+          tabBarIcon: ({focused}) => (
+            <TabIcon iconName={focused ? 'home' : 'home-outline'} focused={focused} />
+          ),
         }}
       />
       <Tab.Screen
         name="MyRFQs"
         component={MyRFQsScreen}
         options={{
-          tabBarIcon: ({focused}) => <TabIcon emoji="📋" focused={focused} />,
-          tabBarLabel: ({focused}) => <TabLabel label="My RFQs" focused={focused} />,
+          tabBarIcon: ({focused}) => (
+            <TabIcon iconName="file-document-outline" focused={focused} />
+          ),
           tabBarBadge: rfqBadge,
           tabBarBadgeStyle: {
             backgroundColor: '#EF4444',
             color: '#FFFFFF',
             fontSize: 10,
+            minWidth: 18,
+            height: 18,
+            borderRadius: 9,
           },
         }}
       />
@@ -124,16 +138,18 @@ function HomeTabs() {
         name="MyJobs"
         component={MyJobsScreen}
         options={{
-          tabBarIcon: ({focused}) => <TabIcon emoji="💼" focused={focused} />,
-          tabBarLabel: ({focused}) => <TabLabel label="My Jobs" focused={focused} />,
+          tabBarIcon: ({focused}) => (
+            <TabIcon iconName={focused ? 'briefcase' : 'briefcase-outline'} focused={focused} />
+          ),
         }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
         options={{
-          tabBarIcon: ({focused}) => <TabIcon emoji="👤" focused={focused} />,
-          tabBarLabel: ({focused}) => <TabLabel label="Profile" focused={focused} />,
+          tabBarIcon: ({focused}) => (
+            <TabIcon iconName={focused ? 'account' : 'account-outline'} focused={focused} />
+          ),
         }}
       />
     </Tab.Navigator>
@@ -145,6 +161,17 @@ export default function RootNavigator() {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{headerShown: false}}>
         <Stack.Screen name="HomeTabs" component={HomeTabs} />
+        <Stack.Screen
+          name="SubcategoryGrid"
+          component={SubcategoryGridScreen}
+          options={{
+            headerShown: true,
+            headerTitle: '',
+            headerStyle: {backgroundColor: '#192433'},
+            headerTintColor: '#FFFFFF',
+            headerBackTitle: '',
+          }}
+        />
         <Stack.Screen name="SearchResults" component={SearchResultsScreen} />
         <Stack.Screen name="SupplierProfile" component={SupplierProfileScreen} />
         <Stack.Screen name="RFQForm" component={RFQFormScreen} />

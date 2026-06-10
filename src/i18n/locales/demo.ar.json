@@ -1,0 +1,90 @@
+{
+  "categories": {
+    "manpower": "العمالة",
+    "machinery": "المعدات",
+    "shipping": "الشحن"
+  },
+  "subcategories": {
+    "plumber": "سباك",
+    "electrician": "كهربائي",
+    "carpenter": "نجار",
+    "mason": "بنّاء",
+    "welder": "لحّام",
+    "painter": "دهّان",
+    "excavator": "حفارة",
+    "crane": "رافعة",
+    "forklift": "رافعة شوكية",
+    "bulldozer": "بلدوزر",
+    "concrete_mixer": "خلاطة خرسانة",
+    "pallet": "بالتات",
+    "container": "حاوية",
+    "refrigerated": "نقل مبرد",
+    "flatbed": "مسطحة"
+  },
+  "rfqStatus": {
+    "draft": "مسودة",
+    "broadcasted": "تم البث",
+    "receiving_quotes": "استلام عروض",
+    "negotiating": "قيد التفاوض",
+    "accepted": "مقبول",
+    "rejected": "مرفوض",
+    "expired": "منتهي"
+  },
+  "jobStatus": {
+    "pending_start": "في انتظار البدء",
+    "in_progress": "قيد التنفيذ",
+    "paused": "متوقف",
+    "completed": "مكتمل",
+    "cancelled": "ملغي",
+    "disputed": "متنازع"
+  },
+  "actions": {
+    "createRFQ": "إنشاء طلب عرض سعر",
+    "sendRFQ": "إرسال طلب",
+    "viewQuotes": "عرض العروض",
+    "acceptQuote": "قبول العرض",
+    "rejectQuote": "رفض العرض",
+    "counterOffer": "عرض مقابل",
+    "viewProfile": "عرض الملف",
+    "callSupplier": "اتصل بالمورد",
+    "messageSupplier": "راسل المورد",
+    "viewJob": "عرض العمل",
+    "completeJob": "إنهاء العمل",
+    "cancelJob": "إلغاء العمل",
+    "viewDetails": "عرض التفاصيل"
+  },
+  "labels": {
+    "budget": "الميزانية",
+    "duration": "المدة",
+    "startDate": "تاريخ البدء",
+    "city": "المدينة",
+    "rating": "التقييم",
+    "totalJobs": "إجمالي الأعمال",
+    "responseTime": "وقت الاستجابة",
+    "verified": "موثّق",
+    "yearsExperience": "سنوات الخبرة",
+    "pricePerHour": "السعر بالساعة",
+    "pricePerDay": "السعر باليوم",
+    "availability": "التوفر",
+    "available": "متاح",
+    "busy": "مشغول",
+    "unavailable": "غير متاح",
+    "certifications": "الشهادات",
+    "description": "الوصف",
+    "progress": "التقدم",
+    "milestones": "المراحل",
+    "amount": "المبلغ",
+    "finalAmount": "المبلغ النهائي",
+    "currency": "ر.ع."
+  },
+  "messages": {
+    "noRFQsYet": "لا توجد طلبات حالياً",
+    "noJobsYet": "لا توجد أعمال حالياً",
+    "noQuotesYet": "لم يتم استلام عروض بعد",
+    "rfqCreated": "تم إنشاء الطلب بنجاح",
+    "quoteAccepted": "تم قبول العرض",
+    "jobCompleted": "تم إنهاء العمل",
+    "searchingResources": "جاري البحث عن الموارد...",
+    "broadcastingToSuppliers": "جاري البث للموردين..."
+  }
+}

@@ -15,7 +15,7 @@ export default function LanguageToggle() {
         <Text
           className={`text-sm ${
             currentLanguage === 'en'
-              ? 'text-[#1A4FBA] font-semibold'
+              ? 'text-[#192433] font-semibold'
               : 'text-[#6B7280] font-normal'
           }`}
         >
@@ -33,7 +33,7 @@ export default function LanguageToggle() {
         <Text
           className={`text-sm ${
             currentLanguage === 'ar'
-              ? 'text-[#1A4FBA] font-semibold'
+              ? 'text-[#192433] font-semibold'
               : 'text-[#6B7280] font-normal'
           }`}
         >

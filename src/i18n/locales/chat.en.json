@@ -1,0 +1,32 @@
+{
+  "greetings": {
+    "hello": "Hello",
+    "thanks": "Thanks",
+    "welcome": "Welcome",
+    "noProblem": "No problem"
+  },
+  "negotiation": {
+    "canYouLowerPrice": "Can you lower the price?",
+    "thisIsMyBestPrice": "This is my best price",
+    "deal": "Deal",
+    "letMeThink": "Let me think about it",
+    "okAccept": "OK, I accept",
+    "tooExpensive": "Too expensive",
+    "fairPrice": "Fair price",
+    "iWillCallYou": "I'll call you",
+    "callMeBack": "Call me back",
+    "whenCanYouStart": "When can you start?",
+    "iCanStartTomorrow": "I can start tomorrow",
+    "tooLate": "Too late",
+    "perfect": "Perfect",
+    "letsDoIt": "Let's do it"
+  },
+  "common": {
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK",
+    "good": "Good",
+    "fine": "Fine",
+    "later": "Later"
+  }
+}

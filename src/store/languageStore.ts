@@ -15,8 +15,8 @@ interface LanguageStore {
 }
 
 export const useLanguageStore = create<LanguageStore>((set) => ({
-  currentLanguage: 'en',
-  isRTL: false,
+  currentLanguage: 'ar',
+  isRTL: true,
 
   setLanguage: async (lang: Language) => {
     await AsyncStorage.setItem(LANGUAGE_KEY, lang);

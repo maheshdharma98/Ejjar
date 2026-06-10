@@ -1,306 +1,247 @@
-import React, {useMemo, useState} from 'react';
-import {FlatList, I18nManager, ScrollView, Text, TextInput, TouchableOpacity, View} from 'react-native';
+import React, {useState} from 'react';
+import {Alert, I18nManager, Modal, Pressable, ScrollView, Text, TextInput, TouchableOpacity, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {RouteProp} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
+import Icon from '../components/common/Icon';
 
 import type {RootStackParamList} from '../navigation/RootNavigator';
-import {maskSupplierName} from '../utils/masking';
+import {useDemoData} from '../store/demoDataStore';
+import {getLocalizedField, formatCurrency, formatRelativeTime} from '../utils/arabicFormatters';
+import type {RFQ, QuoteMessage} from '../../../shared/types/demo';
+import {useDemoStore} from '../store/demoStore';
+import DemoTooltip from '../components/common/DemoTooltip';
+import DemoFloatingBar from '../components/common/DemoFloatingBar';
+import {colors, shadows} from '../theme/designSystem';
+import CategoryIcon from '../components/common/CategoryIcon';
 
-interface RawResponse {
-  id: string;
-  supplier_id: string;
-  resource_id: string;
-  unit_price_usd: number;
-  total_price_usd: number;
-  currency: string;
-  notes: string;
-  submitted_at: string;
-  status: string;
-}
-interface RawRFQ {
-  id: string;
-  contractor_id: string;
-  category: string;
-  subcategory: string;
-  description: string;
-  quantity: number;
-  country: string;
-  city: string;
-  region: string;
-  start_date: string;
-  end_date: string;
-  status: string;
-  created_at: string;
-  supplier_responses: RawResponse[];
-}
-
-const rfqsData: RawRFQ[] = require('../../../shared/mock/rfqs.json');
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Route = RouteProp<RootStackParamList, 'RFQDetail'>;
 
 const STEPS = [
-  {key: 'new', label: 'New'},
-  {key: 'supplier_responded', label: 'Quotes'},
-  {key: 'negotiation', label: 'Negotiating'},
-  {key: 'accepted', label: 'Accepted'},
-  {key: 'confirmed', label: 'Confirmed'},
-  {key: 'completed', label: 'Done'},
+  {key: 'broadcasted',      labelEn: 'Sent',        labelAr: 'تم البث',     icon: 'broadcast'},
+  {key: 'receiving_quotes', labelEn: 'Quotes In',   labelAr: 'عروض واردة', icon: 'message-text-outline'},
+  {key: 'negotiating',      labelEn: 'Negotiating', labelAr: 'تفاوض',       icon: 'swap-horizontal'},
+  {key: 'accepted',         labelEn: 'Accepted',    labelAr: 'مقبول',       icon: 'check-circle-outline'},
 ];
 
 const STATUS_STEP: Record<string, number> = {
-  new: 0,
-  supplier_responded: 1,
-  negotiation: 2,
+  draft: 0,
+  broadcasted: 0,
+  receiving_quotes: 1,
+  negotiating: 2,
   accepted: 3,
-  confirmed: 4,
-  completed: 5,
   rejected: -1,
+  expired: -1,
 };
 
-const RESPONSE_STATUS_STYLE: Record<string, {bg: string; color: string; label: string}> = {
-  submitted: {bg: '#FEF3C7', color: '#D97706', label: 'Pending'},
-  pending:   {bg: '#FEF3C7', color: '#D97706', label: 'Pending'},
-  accepted:  {bg: '#DCFCE7', color: '#15803D', label: 'Accepted'},
-  rejected:  {bg: '#FEE2E2', color: '#DC2626', label: 'Rejected'},
-  countered: {bg: '#E8EEFB', color: '#1A4FBA', label: 'Countered'},
-};
-
-function StarRating({rating}: {rating: number}) {
-  return (
-    <View className="flex-row gap-0.5">
-      {[1, 2, 3, 4, 5].map(s => (
-        <Text key={s} className={`text-sm ${s <= Math.round(rating) ? 'text-[#F59E0B]' : 'text-[#E5E7EB]'}`}>★</Text>
-      ))}
-    </View>
-  );
-}
 
 export default function RFQDetailScreen() {
-  const {t} = useTranslation();
+  const {t, i18n} = useTranslation();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
 
   const {rfqId} = route.params;
-  const rfq = rfqsData.find(r => r.id === rfqId) ?? rfqsData[0];
+  const getRFQById = useDemoData(s => s.getRFQById);
+  const addQuoteToRFQ = useDemoData(s => s.addQuoteToRFQ);
+  const acceptQuoteAction = useDemoData(s => s.acceptQuote);
+  const rejectQuoteAction = useDemoData(s => s.rejectQuote);
+  const rfq = getRFQById(rfqId) as RFQ | undefined;
+
+  const {isActive, currentStep: demoStep, nextStep: demoNext} = useDemoStore();
+
+  const [showCounterModal, setShowCounterModal] = useState(false);
+  const [counterAmount, setCounterAmount] = useState('');
+  const [counterMessage, setCounterMessage] = useState('');
+  const [selectedQuoteId, setSelectedQuoteId] = useState('');
+
+  const isAr = i18n.language === 'ar';
+
+  if (!rfq) {
+    return (
+      <View style={{flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center'}}>
+        <Text style={{color: colors.textSecondary}}>
+          {isAr ? 'الطلب غير موجود' : 'RFQ not found'}
+        </Text>
+      </View>
+    );
+  }
 
   const currentStep = STATUS_STEP[rfq.status] ?? 0;
 
-  // Local overrides for response statuses
-  const [localStatus, setLocalStatus] = useState<Record<string, string>>({});
-  const [counterState, setCounterState] = useState<{id: string; value: string} | null>(null);
-
-  const responses = useMemo(() => rfq.supplier_responses ?? [], [rfq]);
-
-  const getResponseStatus = (res: RawResponse) =>
-    localStatus[res.id] ?? res.status;
-
-  const handleAccept = (res: RawResponse) => {
-    setLocalStatus(prev => ({...prev, [res.id]: 'accepted'}));
-    setCounterState(null);
-  };
-
-  const handleReject = (res: RawResponse) => {
-    setLocalStatus(prev => ({...prev, [res.id]: 'rejected'}));
-    setCounterState(null);
-  };
-
-  const handleCounter = (res: RawResponse) => {
-    setCounterState(cs => cs?.id === res.id ? null : {id: res.id, value: ''});
-  };
-
-  const handleCounterSubmit = (res: RawResponse) => {
-    if (!counterState?.value) return;
-    setLocalStatus(prev => ({...prev, [res.id]: 'countered'}));
-    setCounterState(null);
-  };
-
-  const formatDate = (iso: string) => {
-    try {
-      return new Date(iso).toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'});
-    } catch {
-      return iso;
-    }
-  };
-
-  const renderResponse = ({item}: {item: RawResponse}) => {
-    const status = getResponseStatus(item);
-    const badge = RESPONSE_STATUS_STYLE[status] ?? RESPONSE_STATUS_STYLE.pending;
-    const isPending = status === 'submitted' || status === 'pending';
-    const isCountering = counterState?.id === item.id;
-
-    return (
-      <View className="bg-white rounded-2xl shadow-sm p-4 mb-3">
-        {/* Row 1: name + status */}
-        <View className="flex-row items-center justify-between">
-          <Text className="text-[#1A1A2E] text-base font-bold flex-1 me-2" numberOfLines={1}>
-            {maskSupplierName(item.supplier_id)}
-          </Text>
-          <View className="rounded-full px-3 py-1" style={{backgroundColor: badge.bg}}>
-            <Text className="text-xs font-semibold" style={{color: badge.color}}>{badge.label}</Text>
-          </View>
-        </View>
-
-        {/* Quote amount */}
-        <View className="flex-row items-baseline mt-3">
-          <Text className="text-base font-normal text-[#1A4FBA]">{item.currency} </Text>
-          <Text className="text-2xl font-bold text-[#1A4FBA]">
-            {item.total_price_usd.toLocaleString()}
-          </Text>
-        </View>
-
-        {/* Notes */}
-        {!!item.notes && (
-          <Text className="text-sm text-[#6B7280] mt-2 leading-5">{item.notes}</Text>
-        )}
-
-        {/* Resources chips */}
-        {!!item.resource_id && (
-          <View className="flex-row flex-wrap gap-1 mt-2">
-            <View className="bg-[#E8EEFB] rounded-full px-2 py-0.5">
-              <Text className="text-[#1A4FBA] text-xs">{item.resource_id}</Text>
-            </View>
-          </View>
-        )}
-
-        <View className="h-px bg-[#E5E7EB] my-3" />
-
-        {/* Action buttons (pending only) */}
-        {isPending && (
-          <>
-            <View className="flex-row items-center gap-2">
-              <TouchableOpacity
-                className="flex-1 h-10 rounded-xl items-center justify-center"
-                style={{backgroundColor: '#22C55E'}}
-                activeOpacity={0.8}
-                onPress={() => handleAccept(item)}
-              >
-                <Text className="text-white text-sm font-semibold">{t('common.acceptQuote')}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                className="flex-1 h-10 rounded-xl items-center justify-center border-2 border-[#1A4FBA]"
-                activeOpacity={0.7}
-                onPress={() => handleCounter(item)}
-              >
-                <Text className="text-[#1A4FBA] text-sm font-medium">{t('common.counterQuote')}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                className="h-10 px-4 rounded-xl items-center justify-center bg-[#FEE2E2]"
-                activeOpacity={0.7}
-                onPress={() => handleReject(item)}
-              >
-                <Text className="text-[#DC2626] text-sm font-medium">{t('common.reject')}</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Counter offer input */}
-            {isCountering && (
-              <View className="mt-3">
-                <Text className="text-[#1A1A2E] text-sm font-medium mb-2 ps-1">Your Counter Offer ({item.currency})</Text>
-                <View className="flex-row gap-2">
-                  <TextInput
-                    className="flex-1 bg-white border-2 border-[#1A4FBA] rounded-xl h-[44px] px-4 text-[#1A1A2E] text-base"
-                    value={counterState?.value ?? ''}
-                    onChangeText={v => setCounterState(cs => cs ? {...cs, value: v} : null)}
-                    keyboardType="decimal-pad"
-                    placeholder={item.total_price_usd.toString()}
-                    placeholderTextColor="#9CA3AF"
-                    autoFocus
-                  />
-                  <TouchableOpacity
-                    className="bg-[#1A4FBA] h-[44px] px-4 rounded-xl items-center justify-center"
-                    activeOpacity={0.8}
-                    onPress={() => handleCounterSubmit(item)}
-                  >
-                    <Text className="text-white text-sm font-semibold">{t('common.submit')}</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-          </>
-        )}
-
-        {/* Non-pending footer */}
-        {!isPending && (
-          <Text className="text-xs text-[#9CA3AF]">
-            {formatDate(item.submitted_at)}
-          </Text>
-        )}
-      </View>
+  const handleAcceptQuote = (quoteId: string) => {
+    Alert.alert(
+      isAr ? 'تأكيد القبول' : 'Confirm Accept',
+      isAr ? 'هل تريد قبول هذا العرض وبدء العمل؟' : 'Accept this quote and start the job?',
+      [
+        {text: isAr ? 'إلغاء' : 'Cancel', style: 'cancel'},
+        {
+          text: isAr ? 'نعم، قبول' : 'Yes, Accept',
+          onPress: () => {
+            const newJob = acceptQuoteAction(rfq.id, quoteId);
+            if (newJob) {
+              Alert.alert(
+                isAr ? '🎉 تم القبول!' : '🎉 Accepted!',
+                isAr
+                  ? 'تم قبول العرض وبدأ العمل. يمكنك متابعة التقدم في قسم الأعمال.'
+                  : 'Quote accepted and job started. Track progress in My Jobs.',
+                [{
+                  text: isAr ? 'عرض الأعمال' : 'View Jobs',
+                  onPress: () => navigation.navigate('MyJobs' as never),
+                }],
+              );
+            }
+          },
+        },
+      ],
     );
   };
 
+  const handleRejectQuote = (quoteId: string) => {
+    Alert.alert(
+      isAr ? 'رفض العرض' : 'Reject Quote',
+      isAr ? 'هل أنت متأكد من رفض هذا العرض؟' : 'Are you sure you want to reject this quote?',
+      [
+        {text: isAr ? 'إلغاء' : 'Cancel', style: 'cancel'},
+        {
+          text: isAr ? 'رفض' : 'Reject',
+          style: 'destructive',
+          onPress: () => rejectQuoteAction(rfq.id, quoteId),
+        },
+      ],
+    );
+  };
+
+  const handleSubmitCounter = () => {
+    const amount = Number(counterAmount);
+    if (!counterAmount || isNaN(amount) || amount <= 0) {
+      Alert.alert(
+        isAr ? 'خطأ' : 'Error',
+        isAr ? 'يرجى إدخال مبلغ صحيح' : 'Please enter a valid amount',
+      );
+      return;
+    }
+    const msg = counterMessage.trim() ||
+      (isAr
+        ? 'عرضنا المقابل — نأمل التوصل إلى اتفاق مناسب للطرفين.'
+        : 'Our counter offer — hoping to reach a mutually beneficial agreement.');
+    addQuoteToRFQ(rfq.id, {
+      rfqId: rfq.id,
+      fromRole: 'contractor',
+      fromId: 'C001',
+      amount,
+      currency: 'OMR',
+      duration: rfq.duration,
+      durationAr: rfq.durationAr,
+      message: isAr ? msg : msg,
+      messageAr: msg,
+      status: 'countered_by_contractor',
+    });
+    setShowCounterModal(false);
+    setCounterAmount('');
+    setCounterMessage('');
+  };
+
+  void selectedQuoteId;
+
   return (
-    <View className="flex-1 bg-[#F5F7FA]">
+    <View style={{flex: 1, backgroundColor: colors.background}}>
+
       {/* HEADER */}
       <View
-        className="bg-white shadow-sm flex-row items-center px-4"
-        style={{paddingTop: insets.top + 12, paddingBottom: 12}}
+        style={[
+          {
+            backgroundColor: colors.card,
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: 16,
+            paddingTop: insets.top + 12,
+            paddingBottom: 12,
+          },
+          shadows.sm,
+        ]}
       >
-        <TouchableOpacity onPress={() => navigation.goBack()} className="me-3 p-1" hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-          <Text className="text-[#1A4FBA] text-xl font-bold" style={{transform: [{scaleX: I18nManager.isRTL ? -1 : 1}]}}>←</Text>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={{marginRight: 12, padding: 4}}
+          hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+        >
+          <View style={{transform: [{scaleX: I18nManager.isRTL ? -1 : 1}]}}>
+            <Icon name="arrow-left" size={24} color={colors.primary} />
+          </View>
         </TouchableOpacity>
-        <Text className="text-lg font-bold text-[#1A1A2E] flex-1">{t('rfq.title')}</Text>
-        <View className="bg-[#E8EEFB] rounded-full px-3 py-1">
-          <Text className="text-[#1A4FBA] text-xs font-semibold">#{rfq.id}</Text>
+        <View style={{flex: 1}}>
+          <Text style={{fontSize: 17, fontWeight: '700', color: colors.textPrimary}}>
+            {t('rfq.title')}
+          </Text>
         </View>
+        <View
+          style={{
+            backgroundColor: colors.primaryLight,
+            borderRadius: 20,
+            paddingHorizontal: 10,
+            paddingVertical: 4,
+            marginRight: 8,
+          }}
+        >
+          <Text style={{fontSize: 11, fontWeight: '600', color: colors.primary}}>#{rfq.id.slice(-6).toUpperCase()}</Text>
+        </View>
+        <TouchableOpacity hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+          <Icon name="share-variant" size={20} color={colors.textSecondary} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom: 40}}>
+
         {/* STATUS STEPPER */}
         <View
-          className="bg-white mx-4 mt-3 rounded-2xl shadow-sm"
-          style={{paddingVertical: 20}}
+          style={[
+            {backgroundColor: colors.card, marginHorizontal: 16, marginTop: 12, borderRadius: 16, paddingVertical: 20},
+            shadows.sm,
+          ]}
         >
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{paddingHorizontal: 20, alignItems: 'flex-start'}}
+            contentContainerStyle={{paddingHorizontal: 16, alignItems: 'flex-start'}}
           >
             {STEPS.map((step, idx) => {
               const isPast = idx < currentStep;
               const isCurrent = idx === currentStep;
-              const circleSize = isCurrent ? 36 : 32;
-              const circleColor = isPast ? '#22C55E' : isCurrent ? '#1A4FBA' : '#E5E7EB';
-              const textColor = isPast ? '#22C55E' : isCurrent ? '#1A4FBA' : '#9CA3AF';
-              const lineColor = isPast ? '#22C55E' : '#E5E7EB';
+              const circleSize = 36;
+              const circleBg = isPast ? colors.success : isCurrent ? colors.primary : '#F1F5F9';
+              const iconColor = isPast || isCurrent ? '#FFFFFF' : '#94A3B8';
+              const textColor = isPast ? colors.success : isCurrent ? colors.primary : '#94A3B8';
+              const lineColor = isPast ? colors.success : '#E2E8F0';
 
               return (
-                <View key={step.key} className="flex-row items-center">
-                  <View style={{alignItems: 'center', width: circleSize + 8}}>
-                    {/* Circle */}
+                <View key={step.key} style={{flexDirection: 'row', alignItems: 'flex-start'}}>
+                  <View style={{alignItems: 'center', width: 72}}>
                     <View
                       style={{
                         width: circleSize,
                         height: circleSize,
                         borderRadius: circleSize / 2,
-                        backgroundColor: circleColor,
+                        backgroundColor: circleBg,
                         alignItems: 'center',
                         justifyContent: 'center',
-                        shadowColor: isCurrent ? '#1A4FBA' : 'transparent',
+                        shadowColor: isCurrent ? colors.primary : 'transparent',
                         shadowOffset: {width: 0, height: 3},
                         shadowOpacity: 0.3,
                         shadowRadius: 6,
                         elevation: isCurrent ? 4 : 0,
                       }}
                     >
-                      <Text
-                        style={{
-                          color: '#FFFFFF',
-                          fontSize: isCurrent ? 13 : 11,
-                          fontWeight: '700',
-                        }}
-                      >
-                        {isPast ? '✓' : (idx + 1).toString()}
-                      </Text>
+                      {isPast ? (
+                        <Icon name="check" size={18} color="#FFFFFF" />
+                      ) : (
+                        <Icon name={step.icon} size={16} color={iconColor} />
+                      )}
                     </View>
-                    {/* Label */}
                     <Text
                       style={{
                         fontSize: 10,
@@ -308,10 +249,10 @@ export default function RFQDetailScreen() {
                         color: textColor,
                         textAlign: 'center',
                         marginTop: 6,
-                        maxWidth: 56,
+                        maxWidth: 64,
                       }}
                     >
-                      {step.label}
+                      {isAr ? step.labelAr : step.labelEn}
                     </Text>
                   </View>
 
@@ -320,11 +261,11 @@ export default function RFQDetailScreen() {
                     <View
                       style={{
                         height: 2,
-                        width: 24,
+                        width: 20,
                         borderRadius: 1,
                         backgroundColor: lineColor,
-                        marginBottom: 22,
-                        marginHorizontal: 2,
+                        marginTop: 17,
+                        marginHorizontal: -4,
                       }}
                     />
                   )}
@@ -335,55 +276,294 @@ export default function RFQDetailScreen() {
         </View>
 
         {/* RFQ SUMMARY CARD */}
-        <View className="bg-white rounded-2xl shadow-sm mx-4 mt-1 p-4">
-          <View className="flex-row items-center mb-2">
-            <View className="bg-[#E8EEFB] rounded-full px-3 py-1 me-2">
-              <Text className="text-[#1A4FBA] text-xs font-medium capitalize">{rfq.category}</Text>
+        <View style={[{backgroundColor: colors.card, borderRadius: 16, marginHorizontal: 16, marginTop: 12, padding: 16}, shadows.sm]}>
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <CategoryIcon category={rfq.category} size={24} withBackground />
+            <View style={{flex: 1, marginStart: 12}}>
+              <Text style={{fontSize: 15, fontWeight: '700', color: colors.textPrimary}} numberOfLines={2}>
+                {getLocalizedField(rfq, 'title')}
+              </Text>
+              <Text style={{fontSize: 12, color: colors.textSecondary, marginTop: 2}}>
+                {isAr ? t('demo:categories.' + rfq.category) : rfq.category}
+              </Text>
             </View>
-            <Text className="text-[#1A1A2E] text-base font-bold capitalize flex-1">
-              {rfq.subcategory.replace(/_/g, ' ')}
-            </Text>
           </View>
-
-          <Text className="text-sm text-[#6B7280]">{rfq.city}, {rfq.country}</Text>
-          <Text className="text-sm text-[#6B7280] mt-0.5">
-            {formatDate(rfq.start_date)} → {formatDate(rfq.end_date)}
-          </Text>
-          <Text className="text-sm text-[#1A1A2E] leading-6 mt-2">{rfq.description}</Text>
-
-          {responses.length > 0 && (
-            <View className="flex-row items-center mt-3">
-              <View className="bg-[#E8EEFB] rounded-full px-3 py-1 flex-row items-center gap-1">
-                <Text className="text-[#1A4FBA] text-xs font-semibold">
-                  {responses.length} {t('rfq.quotesReceived')}
-                </Text>
-              </View>
+          <View style={{marginTop: 12, gap: 8}}>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+              <Icon name="calendar" size={14} color={colors.textSecondary} />
+              <Text style={{fontSize: 13, color: colors.textSecondary}}>{rfq.startDate}</Text>
             </View>
-          )}
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+              <Icon name="map-marker" size={14} color={colors.textSecondary} />
+              <Text style={{fontSize: 13, color: colors.textSecondary}}>{getLocalizedField(rfq, 'city')}</Text>
+            </View>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+              <Icon name="currency-usd" size={14} color={colors.textSecondary} />
+              <Text style={{fontSize: 13, color: colors.textSecondary}}>
+                {formatCurrency(rfq.budget.min)} – {formatCurrency(rfq.budget.max)}
+              </Text>
+            </View>
+            <View style={{flexDirection: 'row', alignItems: 'flex-start', gap: 8}}>
+              <View style={{marginTop: 2}}><Icon name="text-box-outline" size={14} color={colors.textSecondary} /></View>
+              <Text style={{fontSize: 13, color: colors.textSecondary, flex: 1}} numberOfLines={3}>
+                {getLocalizedField(rfq, 'description')}
+              </Text>
+            </View>
+          </View>
         </View>
 
-        {/* QUOTES SECTION */}
-        {responses.length > 0 && (
-          <View className="px-4 mt-4">
-            <Text className="text-lg font-bold text-[#1A1A2E] mb-3">{t('rfq.compareQuotes')}</Text>
-            <FlatList
-              data={responses}
-              keyExtractor={item => item.id}
-              renderItem={renderResponse}
-              scrollEnabled={false}
-            />
-          </View>
-        )}
+        {/* BROADCAST BANNER */}
+        <View style={{
+          marginHorizontal: 16, marginTop: 12,
+          backgroundColor: '#EEF2FF', borderRadius: 12, padding: 12,
+          flexDirection: 'row', alignItems: 'center', gap: 8,
+        }}>
+          <Icon name="broadcast" size={18} color="#4F46E5" />
+          <Text style={{color: '#4F46E5', fontSize: 13, fontWeight: '600', flex: 1}}>
+            {isAr
+              ? `تم البث إلى ${rfq.broadcastedTo?.length ?? 0} مورد`
+              : `Broadcasted to ${rfq.broadcastedTo?.length ?? 0} suppliers`}
+          </Text>
+        </View>
 
-        {responses.length === 0 && (
-          <View className="items-center py-12 px-4">
-            <Text style={{fontSize: 40}}>⏳</Text>
-            <Text className="text-base text-[#6B7280] mt-3 text-center">
-              {t('rfq.status_new')} — {t('search.broadcastRFQ')}
+        {/* QUOTE THREAD */}
+        <Text style={{fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginHorizontal: 16, marginTop: 20, marginBottom: 12}}>
+          {isAr ? 'خيط العروض' : 'Quote Thread'}
+          {(rfq.quotes?.length ?? 0) > 0 && ` (${rfq.quotes.length})`}
+        </Text>
+
+        {(rfq.quotes?.length ?? 0) === 0 ? (
+          <View style={{alignItems: 'center', paddingVertical: 40, paddingHorizontal: 24}}>
+            <View style={{width: 80, height: 80, borderRadius: 40, backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 16}}>
+              <Icon name="chat-outline" size={40} color={colors.primary} />
+            </View>
+            <Text style={{fontSize: 16, fontWeight: '700', color: colors.textPrimary, textAlign: 'center'}}>
+              {isAr ? 'في انتظار الردود' : 'Awaiting Responses'}
+            </Text>
+            <Text style={{fontSize: 13, color: colors.textSecondary, textAlign: 'center', marginTop: 6, lineHeight: 20}}>
+              {isAr ? 'لم يتم استلام عروض بعد' : 'No quotes received yet'}
             </Text>
           </View>
+        ) : (
+          rfq.quotes.map((quote: QuoteMessage, index: number) => {
+            const isFromSupplier = quote.fromRole === 'supplier';
+            const isFromContractor = quote.fromRole === 'contractor';
+            const isLatest = index === rfq.quotes.length - 1;
+            return (
+              <View
+                key={quote.id}
+                style={{
+                  marginHorizontal: 16,
+                  marginBottom: 12,
+                  alignItems: isFromContractor ? 'flex-end' : 'flex-start',
+                }}
+              >
+                {/* Role label + timestamp */}
+                <Text style={{fontSize: 11, color: '#9CA3AF', marginBottom: 4, marginHorizontal: 4}}>
+                  {isFromSupplier
+                    ? (isAr ? 'المورد' : 'Supplier')
+                    : (isAr ? 'أنت' : 'You')}
+                  {' • '}{formatRelativeTime(quote.timestamp)}
+                </Text>
+
+                {/* Quote bubble */}
+                <View style={{
+                  maxWidth: '85%',
+                  backgroundColor: isFromContractor ? '#192433' : colors.card,
+                  borderRadius: 16,
+                  borderBottomEndRadius: isFromContractor ? 4 : 16,
+                  borderBottomStartRadius: isFromSupplier ? 4 : 16,
+                  padding: 14,
+                  borderWidth: isFromSupplier ? 1 : 0,
+                  borderColor: colors.border,
+                  shadowColor: '#000',
+                  shadowOffset: {width: 0, height: 1},
+                  shadowOpacity: 0.08,
+                  shadowRadius: 4,
+                  elevation: 2,
+                }}>
+                  <Text style={{fontSize: 22, fontWeight: '800', color: isFromContractor ? '#BB8D5A' : colors.primary, marginBottom: 2}}>
+                    {formatCurrency(quote.amount)}
+                  </Text>
+                  <Text style={{fontSize: 12, color: isFromContractor ? 'rgba(255,255,255,0.65)' : '#9CA3AF', marginBottom: 8}}>
+                    {getLocalizedField(quote, 'duration')}
+                  </Text>
+                  <Text style={{fontSize: 14, color: isFromContractor ? '#FFFFFF' : '#374151', lineHeight: 20}}>
+                    {getLocalizedField(quote, 'message')}
+                  </Text>
+                </View>
+
+                {/* Action buttons — only on latest supplier quote, RFQ not yet accepted */}
+                {isLatest && isFromSupplier && rfq.status !== 'accepted' && (
+                  <View style={{flexDirection: 'row', gap: 8, marginTop: 8, marginHorizontal: 4}}>
+                    <Pressable
+                      onPress={() => handleAcceptQuote(quote.id)}
+                      style={{backgroundColor: '#10B981', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 6}}
+                    >
+                      <Icon name="check" size={16} color="#FFFFFF" />
+                      <Text style={{color: '#FFFFFF', fontWeight: '700', fontSize: 13}}>
+                        {isAr ? 'قبول' : 'Accept'}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => {
+                        setSelectedQuoteId(quote.id);
+                        setCounterAmount(String(Math.round(quote.amount * 0.9)));
+                        setShowCounterModal(true);
+                      }}
+                      style={{backgroundColor: '#F59E0B', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 6}}
+                    >
+                      <Icon name="swap-horizontal" size={16} color="#FFFFFF" />
+                      <Text style={{color: '#FFFFFF', fontWeight: '700', fontSize: 13}}>
+                        {isAr ? 'عرض مقابل' : 'Counter'}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => handleRejectQuote(quote.id)}
+                      style={{backgroundColor: colors.errorLight, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20}}
+                    >
+                      <Icon name="close" size={16} color={colors.error} />
+                    </Pressable>
+                  </View>
+                )}
+
+                {/* Accepted banner */}
+                {rfq.status === 'accepted' && isLatest && isFromSupplier && (
+                  <View style={{backgroundColor: '#D1FAE5', borderRadius: 10, padding: 10, marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                    <Icon name="check-circle" size={18} color="#10B981" />
+                    <Text style={{color: '#065F46', fontWeight: '600', fontSize: 13}}>
+                      {isAr
+                        ? `✓ تم قبول هذا العرض — ${formatCurrency(rfq.finalAmount ?? 0)}`
+                        : `✓ Quote accepted — ${formatCurrency(rfq.finalAmount ?? 0)}`}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            );
+          })
         )}
       </ScrollView>
+
+      {/* DEMO TOOLTIPS */}
+      <DemoTooltip
+        visible={isActive && demoStep === 'rfq_new'}
+        stepNumber={11} totalSteps={18}
+        title="Step 10: Waiting Stage"
+        description="RFQ status: NEW. The system is now waiting for suppliers to respond with their quotes. Notice the status stepper at the top showing progress."
+        onNext={demoNext}
+      />
+      <DemoTooltip
+        visible={isActive && demoStep === 'rfq_quotes_received'}
+        stepNumber={12} totalSteps={18}
+        title="Step 11: Quotes Received"
+        description="Two suppliers responded with competitive quotes. Contractor can compare quote amount, allocated resources, and supplier ratings."
+        onNext={demoNext}
+      />
+      <DemoTooltip
+        visible={isActive && demoStep === 'rfq_accept_quote'}
+        stepNumber={13} totalSteps={18}
+        title="Step 12: Accept Best Quote"
+        description="Contractor accepts the best offer. Other suppliers are notified that they were not selected. EJJAR maintains transparency throughout."
+        onNext={demoNext}
+      />
+      <DemoTooltip
+        visible={isActive && demoStep === 'rfq_confirmed'}
+        stepNumber={14} totalSteps={18}
+        title="Step 13: Job Confirmed"
+        description="Once both parties confirm, contact details are unmasked. The contractor now sees the supplier's real name and phone number. Job creation begins."
+        onNext={() => {
+          demoNext();
+          navigation.navigate('JobTracking', {jobId: 'job-001'});
+        }}
+      />
+
+      {/* COUNTER OFFER MODAL */}
+      <Modal
+        visible={showCounterModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowCounterModal(false)}
+      >
+        <View style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end'}}>
+          <View style={{
+            backgroundColor: '#FFFFFF',
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+            padding: 24,
+            paddingBottom: insets.bottom + 24,
+          }}>
+            <Text style={{fontSize: 18, fontWeight: '700', color: '#192433', marginBottom: 20}}>
+              {isAr ? 'تقديم عرض مقابل' : 'Submit Counter Offer'}
+            </Text>
+
+            <Text style={{fontSize: 13, color: '#6B7280', marginBottom: 8}}>
+              {isAr ? 'المبلغ المقترح (ر.ع.)' : 'Your Offer Amount (OMR)'}
+            </Text>
+            <TextInput
+              value={counterAmount}
+              onChangeText={setCounterAmount}
+              keyboardType="numeric"
+              placeholder="0"
+              placeholderTextColor="#9CA3AF"
+              style={{
+                borderWidth: 1.5,
+                borderColor: colors.primary,
+                borderRadius: 12,
+                padding: 14,
+                fontSize: 26,
+                fontWeight: '700',
+                color: '#192433',
+                marginBottom: 16,
+                textAlign: 'center',
+              }}
+            />
+
+            <Text style={{fontSize: 13, color: '#6B7280', marginBottom: 8}}>
+              {isAr ? 'رسالة (اختياري)' : 'Message (optional)'}
+            </Text>
+            <TextInput
+              value={counterMessage}
+              onChangeText={setCounterMessage}
+              multiline
+              numberOfLines={3}
+              placeholder={isAr ? 'اكتب رسالتك للمورد...' : 'Write a message to the supplier...'}
+              placeholderTextColor="#9CA3AF"
+              style={{
+                borderWidth: 1,
+                borderColor: colors.border,
+                borderRadius: 12,
+                padding: 14,
+                fontSize: 14,
+                color: '#374151',
+                marginBottom: 20,
+                textAlignVertical: 'top',
+                minHeight: 80,
+              }}
+            />
+
+            <View style={{flexDirection: 'row', gap: 12}}>
+              <Pressable
+                onPress={() => setShowCounterModal(false)}
+                style={{flex: 1, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: colors.border, alignItems: 'center'}}
+              >
+                <Text style={{color: '#6B7280', fontWeight: '600'}}>
+                  {isAr ? 'إلغاء' : 'Cancel'}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={handleSubmitCounter}
+                style={{flex: 2, padding: 14, borderRadius: 12, backgroundColor: '#192433', alignItems: 'center'}}
+              >
+                <Text style={{color: '#FFFFFF', fontWeight: '700'}}>
+                  {isAr ? 'إرسال العرض المقابل' : 'Send Counter Offer'}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <DemoFloatingBar />
     </View>
   );
 }

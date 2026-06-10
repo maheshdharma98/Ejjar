@@ -25,7 +25,7 @@
     "required": "This field is required"
   },
   "home": {
-    "title": "Find Resources in GCC",
+    "title": "Construction Resources in Oman",
     "subtitle": "Manpower · Machinery · Shipping",
     "manpower": "Manpower",
     "machinery": "Machinery & Vehicles",
@@ -49,7 +49,12 @@
     "dropoffCountry": "Dropoff Country",
     "dropoffCity": "Dropoff City",
     "dateFrom": "From Date",
-    "dateTo": "To Date"
+    "dateTo": "To Date",
+    "manpowerSubtitle": "Plumbers, electricians, carpenters & more",
+    "machinerySubtitle": "Excavators, cranes, mixers",
+    "shippingSubtitle": "Pallets, containers, refrigerated",
+    "searchPlaceholder": "Search a service...",
+    "comingSoon": "Coming Soon"
   },
   "search": {
     "title": "Suppliers Found",
@@ -119,7 +124,7 @@
   },
   "auth": {
     "welcome": "Welcome to EJJAR",
-    "subtitle": "GCC Resource Platform",
+    "subtitle": "Oman Resource Platform",
     "phoneLabel": "Mobile Number",
     "phonePlaceholder": "+968 9XXX XXXX",
     "sendOtp": "Send Verification Code",
@@ -128,5 +133,44 @@
     "verify": "Verify and Continue",
     "invalidOtp": "Invalid code, please try again",
     "resend": "Resend Code"
+  },
+  "app": {
+    "name": "EJJAR",
+    "tagline": "Oman Construction Resources"
+  },
+  "nav": {
+    "home": "Home",
+    "rfqs": "RFQs",
+    "jobs": "Jobs",
+    "profile": "Profile",
+    "notifications": "Notifications",
+    "settings": "Settings"
+  },
+  "actions": {
+    "filter": "Filter",
+    "next": "Next",
+    "edit": "Edit",
+    "delete": "Delete",
+    "tryAgain": "Try Again",
+    "logout": "Logout"
+  },
+  "lang": {
+    "language": "Language",
+    "english": "English",
+    "arabic": "العربية"
+  },
+  "supplier": {
+    "sendRFQ": "Send RFQ",
+    "verified": "Verified",
+    "reviews": "reviews",
+    "yearsActive": "Years Active",
+    "yearsShort": "yrs",
+    "responseTime": "Response Time",
+    "about": "About",
+    "services": "Services",
+    "perDay": "Per Day",
+    "perHour": "Per Hour",
+    "certActive": "Active",
+    "validUntil": "Valid until"
   }
 }

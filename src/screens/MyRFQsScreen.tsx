@@ -1,176 +1,246 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import {FlatList, I18nManager, RefreshControl, ScrollView, Text, TouchableOpacity, View} from 'react-native';
+import {FlatList, RefreshControl, ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
 
 import type {RootStackParamList} from '../navigation/RootNavigator';
-
-interface RawRFQ {
-  id: string; category: string; subcategory: string;
-  country: string; city: string; start_date: string; end_date: string;
-  status: string; supplier_responses: unknown[];
-}
-
-const rfqsData: RawRFQ[] = require('../../../shared/mock/rfqs.json');
+import Icon from '../components/common/Icon';
+import {colors, shadows} from '../theme/designSystem';
+import CategoryIcon from '../components/common/CategoryIcon';
+import {useDemoData} from '../store/demoDataStore';
+import {getLocalizedField, formatRelativeTime} from '../utils/arabicFormatters';
+import type {RFQ} from '../../../shared/types/demo';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type FilterKey = 'all' | 'active' | 'completed' | 'rejected';
 
-const FILTERS: {key: FilterKey; label: string}[] = [
-  {key: 'all', label: 'All'},
-  {key: 'active', label: 'Active'},
-  {key: 'completed', label: 'Completed'},
-  {key: 'rejected', label: 'Rejected'},
+const FILTERS: {key: FilterKey; label: string; icon: string}[] = [
+  {key: 'all', label: 'All', icon: 'file-document-outline'},
+  {key: 'active', label: 'Active', icon: 'lightning-bolt'},
+  {key: 'completed', label: 'Completed', icon: 'check-circle'},
+  {key: 'rejected', label: 'Rejected', icon: 'close-circle-outline'},
 ];
 
-const ACTIVE_STATUSES = new Set(['new', 'supplier_responded', 'negotiation', 'accepted', 'confirmed']);
+const DEMO_ACTIVE_STATUSES = new Set(['broadcasted', 'receiving_quotes', 'negotiating', 'accepted']);
 
-const STATUS_BADGE: Record<string, {bg: string; color: string; label: string}> = {
-  new:               {bg: '#F3F4F6', color: '#6B7280', label: 'New'},
-  supplier_responded:{bg: '#E8EEFB', color: '#1A4FBA', label: 'Quotes In'},
-  negotiation:       {bg: '#FEF3C7', color: '#D97706', label: 'Negotiating'},
-  accepted:          {bg: '#DCFCE7', color: '#15803D', label: 'Accepted'},
-  confirmed:         {bg: '#DCFCE7', color: '#15803D', label: 'Confirmed'},
-  completed:         {bg: '#DCFCE7', color: '#15803D', label: 'Completed'},
-  rejected:          {bg: '#FEE2E2', color: '#DC2626', label: 'Rejected'},
+const getStatusConfig = (status: string) => {
+  const configs: Record<string, {bg: string; color: string; labelAr: string; labelEn: string}> = {
+    draft:            {bg: '#F3F4F6',         color: '#6B7280', labelAr: 'مسودة',       labelEn: 'Draft'},
+    broadcasted:      {bg: '#EEF2FF',         color: '#4F46E5', labelAr: 'تم البث',     labelEn: 'Broadcasted'},
+    receiving_quotes: {bg: colors.primaryLight, color: colors.primary, labelAr: 'عروض واردة', labelEn: 'Quotes In'},
+    negotiating:      {bg: colors.warningLight, color: '#D97706', labelAr: 'قيد التفاوض', labelEn: 'Negotiating'},
+    accepted:         {bg: '#DCFCE7',         color: '#15803D', labelAr: 'مقبول',       labelEn: 'Accepted'},
+    rejected:         {bg: colors.errorLight, color: colors.error, labelAr: 'مرفوض',   labelEn: 'Rejected'},
+    expired:          {bg: '#F3F4F6',         color: '#6B7280', labelAr: 'منتهي',       labelEn: 'Expired'},
+  };
+  return configs[status] ?? configs.draft;
 };
 
-const CAT_EMOJI: Record<string, string> = {
-  manpower: '👷', machinery: '🏗️', vehicles: '🚛', shipping: '📦',
-};
-const CAT_BG: Record<string, string> = {
-  manpower: '#E8EEFB', machinery: '#FEF3C7', vehicles: '#F0FFF4', shipping: '#F0F9FF',
+const getCategoryIcon = (category: string) => {
+  if (category === 'manpower') return 'account-hard-hat';
+  if (category === 'machinery') return 'excavator';
+  if (category === 'shipping') return 'truck';
+  return 'briefcase-outline';
 };
 
-function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-GB', {day: 'numeric', month: 'short'});
-}
 
 function SkeletonCard() {
-  const bg = '#E5E7EB';
+  const bg = '#E2E8F0';
   return (
-    <View className="bg-white rounded-2xl shadow-sm mx-4 mb-3 p-4">
-      <View className="flex-row items-center">
-        <View style={{width: 40, height: 40, borderRadius: 10, backgroundColor: bg}} />
-        <View className="flex-1 ms-3">
+    <View style={[{backgroundColor: colors.card, borderRadius: 16, marginBottom: 10, padding: 16}, shadows.sm]}>
+      <View style={{flexDirection: 'row', alignItems: 'center'}}>
+        <View style={{width: 44, height: 44, borderRadius: 12, backgroundColor: bg}} />
+        <View style={{flex: 1, marginLeft: 12, gap: 6}}>
           <View style={{width: '55%', height: 14, borderRadius: 4, backgroundColor: bg}} />
-          <View style={{width: '35%', height: 11, borderRadius: 4, backgroundColor: bg, marginTop: 6}} />
+          <View style={{width: '35%', height: 11, borderRadius: 4, backgroundColor: bg}} />
         </View>
-        <View style={{width: 60, height: 22, borderRadius: 11, backgroundColor: bg}} />
+        <View style={{width: 64, height: 24, borderRadius: 12, backgroundColor: bg}} />
       </View>
-      <View style={{width: '40%', height: 12, borderRadius: 4, backgroundColor: bg, marginTop: 12}} />
-      <View style={{width: '30%', height: 10, borderRadius: 4, backgroundColor: bg, marginTop: 6}} />
+      <View style={{height: 1, backgroundColor: bg, marginVertical: 12}} />
+      <View style={{flexDirection: 'row', gap: 8}}>
+        <View style={{width: 80, height: 12, borderRadius: 4, backgroundColor: bg}} />
+        <View style={{width: 60, height: 12, borderRadius: 4, backgroundColor: bg}} />
+      </View>
     </View>
   );
 }
 
 export default function MyRFQsScreen() {
-  const {t} = useTranslation();
+  const {t, i18n} = useTranslation();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  const getMyRFQs = useDemoData(s => s.getMyRFQs);
+  const demoRFQs = getMyRFQs();
+
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1500);
+    const timer = setTimeout(() => setLoading(false), 900);
     return () => clearTimeout(timer);
   }, []);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1500);
+    setTimeout(() => setRefreshing(false), 800);
   }, []);
 
   const filtered = useMemo(() => {
-    if (activeFilter === 'all') return rfqsData;
-    if (activeFilter === 'active') return rfqsData.filter(r => ACTIVE_STATUSES.has(r.status));
-    if (activeFilter === 'completed') return rfqsData.filter(r => r.status === 'completed');
-    return rfqsData.filter(r => r.status === 'rejected');
-  }, [activeFilter]);
+    if (activeFilter === 'all') return demoRFQs;
+    if (activeFilter === 'active') return demoRFQs.filter(r => DEMO_ACTIVE_STATUSES.has(r.status));
+    if (activeFilter === 'completed') return demoRFQs.filter(r => r.status === 'accepted');
+    return demoRFQs.filter(r => r.status === 'rejected' || r.status === 'expired');
+  }, [activeFilter, demoRFQs]);
 
-  const renderRFQ = ({item}: {item: RawRFQ}) => {
-    const badge = STATUS_BADGE[item.status] ?? STATUS_BADGE.new;
-    const emoji = CAT_EMOJI[item.category] ?? '📦';
-    const catBg = CAT_BG[item.category] ?? '#E8EEFB';
-    const quoteCount = (item.supplier_responses ?? []).length;
+  const renderRFQ = ({item}: {item: RFQ}) => {
+    const cfg = getStatusConfig(item.status);
+    const quoteCount = item.quotes?.length ?? 0;
+    const isAr = i18n.language === 'ar';
 
     return (
       <TouchableOpacity
-        className="bg-white rounded-2xl shadow-sm mx-4 mb-3 p-4"
-        activeOpacity={0.85}
+        style={[{backgroundColor: colors.card, borderRadius: 16, marginBottom: 10}, shadows.sm]}
+        activeOpacity={0.88}
         onPress={() => navigation.navigate('RFQDetail', {rfqId: item.id})}
       >
-        <View className="flex-row items-center">
-          <View className="w-10 h-10 rounded-xl items-center justify-center me-3" style={{backgroundColor: catBg}}>
-            <Text style={{fontSize: 18}}>{emoji}</Text>
-          </View>
-          <Text className="text-[#1A1A2E] text-base font-bold flex-1 capitalize me-2" numberOfLines={1}>
-            {item.subcategory.replace(/_/g, ' ')}
-          </Text>
-          <View className="rounded-full px-2 py-0.5" style={{backgroundColor: badge.bg}}>
-            <Text className="text-xs font-semibold" style={{color: badge.color}}>{badge.label}</Text>
-          </View>
-        </View>
-        <Text className="text-[#6B7280] text-sm mt-2">{item.city}, {item.country}</Text>
-        <Text className="text-[#9CA3AF] text-xs mt-0.5">
-          {fmtDate(item.start_date)} → {fmtDate(item.end_date)}
-        </Text>
-        {quoteCount > 0 && (
-          <View className="flex-row mt-2">
-            <View className="bg-[#E8EEFB] rounded-full px-3 py-1">
-              <Text className="text-[#1A4FBA] text-xs font-semibold">
-                {quoteCount} {t('rfq.quotesReceived').toLowerCase()}
+        {/* Accent bar */}
+        <View style={{
+          height: 3, backgroundColor: cfg.color,
+          borderTopLeftRadius: 16, borderTopRightRadius: 16, opacity: 0.7,
+        }} />
+
+        <View style={{padding: 14}}>
+          {/* Row: icon + info + status */}
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <View style={{
+              width: 44, height: 44, borderRadius: 12,
+              backgroundColor: '#EEF2FF', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Icon name={getCategoryIcon(item.category) as any} size={22} color={colors.primary} />
+            </View>
+            <View style={{flex: 1, marginStart: 10}}>
+              <Text
+                style={{fontSize: 15, fontWeight: '700', color: colors.textPrimary}}
+                numberOfLines={1}
+              >
+                {getLocalizedField(item, 'title')}
+              </Text>
+              <View style={{flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2}}>
+                <Icon name="map-marker-outline" size={11} color={colors.textSecondary} />
+                <Text style={{fontSize: 12, color: colors.textSecondary}}>
+                  {getLocalizedField(item, 'city')}
+                </Text>
+              </View>
+            </View>
+            {/* Inline status badge */}
+            <View style={{backgroundColor: cfg.bg, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4}}>
+              <Text style={{fontSize: 11, fontWeight: '600', color: cfg.color}}>
+                {isAr ? cfg.labelAr : cfg.labelEn}
               </Text>
             </View>
           </View>
-        )}
+
+          {/* Divider */}
+          <View style={{height: 1, backgroundColor: '#F1F5F9', marginVertical: 10}} />
+
+          {/* Date row + quote chip */}
+          <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
+              <Icon name="calendar-range" size={12} color={colors.textSecondary} />
+              <Text style={{fontSize: 12, color: colors.textSecondary}}>
+                {formatRelativeTime(item.startDate)}
+              </Text>
+            </View>
+
+            {quoteCount > 0 && (
+              <View style={{
+                flexDirection: 'row', alignItems: 'center', gap: 4,
+                backgroundColor: colors.primaryLight, borderRadius: 20,
+                paddingHorizontal: 10, paddingVertical: 4,
+              }}>
+                <Icon name="cash-multiple" size={12} color={colors.primary} />
+                <Text style={{fontSize: 12, fontWeight: '600', color: colors.primary}}>
+                  {quoteCount} {isAr ? 'عرض' : 'quotes'}
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
       </TouchableOpacity>
     );
   };
 
   const renderEmpty = () => (
-    <View className="flex-1 items-center justify-center pt-16">
-      <Text style={{fontSize: 40}}>📋</Text>
-      <Text className="text-[#6B7280] text-base mt-3">{t('common.noResults')}</Text>
+    <View style={{flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 64}}>
+      <View style={{
+        width: 72, height: 72, borderRadius: 36,
+        backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center',
+        marginBottom: 14,
+      }}>
+        <Icon name="file-document-outline" size={32} color={colors.primary} />
+      </View>
+      <Text style={{fontSize: 16, fontWeight: '700', color: colors.textPrimary}}>
+        {t('common.noResults')}
+      </Text>
+      <Text style={{fontSize: 13, color: colors.textSecondary, marginTop: 5}}>
+        {i18n.language === 'ar' ? 'لا توجد طلبات في هذه الفئة' : 'No RFQs in this category'}
+      </Text>
     </View>
   );
 
-  const canGoBack = navigation.canGoBack();
-
   return (
-    <View className="flex-1 bg-[#F5F7FA]">
+    <View style={{flex: 1, backgroundColor: colors.background}}>
       {/* HEADER */}
-      <View
-        className="bg-white shadow-sm flex-row items-center px-4"
-        style={{paddingTop: insets.top + 12, paddingBottom: 12}}
-      >
-        {canGoBack && (
-          <TouchableOpacity onPress={() => navigation.goBack()} className="me-3 p-1" hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-            <Text className="text-[#1A4FBA] text-xl font-bold" style={{transform: [{scaleX: I18nManager.isRTL ? -1 : 1}]}}>←</Text>
-          </TouchableOpacity>
-        )}
-        <Text className="text-lg font-bold text-[#1A1A2E] flex-1">My RFQs</Text>
-        <View className="bg-[#E8EEFB] rounded-full px-3 py-1">
-          <Text className="text-[#1A4FBA] text-xs font-semibold">{loading ? '…' : filtered.length}</Text>
+      <View style={[{
+        backgroundColor: colors.card,
+        paddingTop: insets.top + 12, paddingBottom: 12, paddingHorizontal: 16,
+        flexDirection: 'row', alignItems: 'center',
+      }, shadows.sm]}>
+        <Text style={{fontSize: 20, fontWeight: '700', color: colors.textPrimary, flex: 1}}>
+          {i18n.language === 'ar' ? 'طلباتي' : 'My RFQs'}
+        </Text>
+        <View style={{
+          backgroundColor: colors.primaryLight, borderRadius: 20,
+          paddingHorizontal: 12, paddingVertical: 4,
+        }}>
+          <Text style={{fontSize: 13, fontWeight: '700', color: colors.primary}}>
+            {loading ? '…' : demoRFQs.length}
+          </Text>
         </View>
       </View>
 
-      {/* FILTER TABS */}
-      <View className="bg-white border-b border-[#E5E7EB]">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{paddingHorizontal: 16, paddingVertical: 12, gap: 8}}>
+      {/* FILTER CHIPS */}
+      <View style={{backgroundColor: colors.card, borderBottomWidth: 1, borderBottomColor: colors.border}}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{paddingHorizontal: 16, paddingVertical: 10, gap: 8}}
+        >
           {FILTERS.map(f => {
             const isActive = activeFilter === f.key;
             return (
               <TouchableOpacity
                 key={f.key}
                 onPress={() => setActiveFilter(f.key)}
-                className={`rounded-full px-4 py-2 ${isActive ? 'bg-[#1A4FBA]' : 'bg-[#F5F7FA] border border-[#E5E7EB]'}`}
+                style={{
+                  flexDirection: 'row', alignItems: 'center', gap: 5,
+                  borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7,
+                  backgroundColor: isActive ? colors.primary : '#F8FAFC',
+                  borderWidth: 1,
+                  borderColor: isActive ? colors.primary : colors.border,
+                }}
                 activeOpacity={0.8}
               >
-                <Text className={`text-sm font-medium ${isActive ? 'text-white' : 'text-[#6B7280]'}`}>{f.label}</Text>
+                <Icon name={f.icon} size={13} color={isActive ? '#FFFFFF' : colors.textSecondary} />
+                <Text style={{
+                  fontSize: 13, fontWeight: '500',
+                  color: isActive ? '#FFFFFF' : colors.textSecondary,
+                }}>
+                  {f.label}
+                </Text>
               </TouchableOpacity>
             );
           })}
@@ -178,7 +248,7 @@ export default function MyRFQsScreen() {
       </View>
 
       {loading ? (
-        <ScrollView contentContainerStyle={{paddingTop: 12, paddingBottom: 24}}>
+        <ScrollView contentContainerStyle={{paddingHorizontal: 16, paddingTop: 12, paddingBottom: 24}}>
           <SkeletonCard /><SkeletonCard /><SkeletonCard />
         </ScrollView>
       ) : (
@@ -187,9 +257,19 @@ export default function MyRFQsScreen() {
           keyExtractor={item => item.id}
           renderItem={renderRFQ}
           ListEmptyComponent={renderEmpty}
-          contentContainerStyle={{paddingTop: 12, paddingBottom: 24 + insets.bottom, flexGrow: 1}}
+          contentContainerStyle={{
+            paddingHorizontal: 16, paddingTop: 12,
+            paddingBottom: 24 + insets.bottom, flexGrow: 1,
+          }}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1A4FBA']} tintColor="#1A4FBA" />}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }
         />
       )}
     </View>
