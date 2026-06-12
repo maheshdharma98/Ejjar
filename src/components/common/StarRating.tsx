@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import {View, Text} from 'react-native';
 import Icon from './Icon';
 
@@ -29,7 +29,7 @@ export default function StarRating({rating, size = 14, showNumber = false}: Prop
         <Text
           style={{
             fontSize: size - 1,
-            fontWeight: '700',
+            fontWeight: '600',
             color: '#0F172A',
             marginLeft: 4,
           }}
@@ -40,3 +40,4 @@ export default function StarRating({rating, size = 14, showNumber = false}: Prop
     </View>
   );
 }
+

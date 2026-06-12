@@ -1,10 +1,5 @@
-/**
- * Typography constants for EJJAR app.
- * To enable Inter font: add Inter .ttf files to
- *   android/app/src/main/assets/fonts/
- *   ios/<ProjectName>/  (update Info.plist UIAppFonts)
- * then set FONT_FAMILY = 'Inter' below.
- */
+// EJJAR Design System v1.0 — typography tokens
+// Inter font (linked once font files are added to native projects)
 const FONT_FAMILY = undefined; // Set to 'Inter' once font files are linked
 
 export const font = {
@@ -15,16 +10,32 @@ export const font = {
 };
 
 export const textStyles = {
-  // Titles and big numbers
-  h1: {fontSize: 24, ...font.bold,    color: '#1A1A2E'},
-  h2: {fontSize: 20, ...font.bold,    color: '#1A1A2E'},
-  h3: {fontSize: 18, ...font.semiBold, color: '#1A1A2E'},
+  // Screen title — white on dark header
+  screenTitle: {fontSize: 18, ...font.bold,    color: '#FFFFFF'},
+  // Section / page headings
+  h2:          {fontSize: 16, ...font.semiBold, color: '#0F172A'},
+  h3:          {fontSize: 14, ...font.semiBold, color: '#0F172A'},
   // Body
-  body: {fontSize: 14, ...font.regular, color: '#1A1A2E', lineHeight: 22},
-  bodyMedium: {fontSize: 14, ...font.medium, color: '#1A1A2E'},
-  // Labels / captions
-  label: {fontSize: 12, ...font.medium, color: '#6B7280'},
-  caption: {fontSize: 11, ...font.regular, color: '#9CA3AF'},
+  body:        {fontSize: 14, ...font.regular,  color: '#475569', lineHeight: 20},
+  bodyMedium:  {fontSize: 13, ...font.medium,   color: '#475569'},
+  // Secondary / muted
+  secondary:   {fontSize: 12, ...font.regular,  color: '#475569'},
+  muted:       {fontSize: 11, ...font.regular,  color: '#94A3B8'},
+  // Field labels — UPPERCASE, letter-spaced
+  fieldLabel:  {fontSize: 11, ...font.semiBold, color: '#94A3B8', textTransform: 'uppercase' as const, letterSpacing: 0.7},
+  // Card text
+  cardTitle:   {fontSize: 13, ...font.semiBold, color: '#0F172A'},
+  cardDesc:    {fontSize: 12, ...font.regular,  color: '#475569', lineHeight: 16},
   // Buttons
-  button: {fontSize: 15, ...font.semiBold, color: '#FFFFFF', letterSpacing: 0.3},
+  button:      {fontSize: 14, ...font.bold,     color: '#FFFFFF'},
+  // Badge
+  badge:       {fontSize: 10, ...font.semiBold},
+  // Caption / meta
+  caption:     {fontSize: 11, ...font.regular,  color: '#94A3B8'},
+  // Tab labels
+  tabActive:   {fontSize: 12, ...font.semiBold, color: '#0F172A'},
+  tabDefault:  {fontSize: 12, ...font.regular,  color: '#64748B'},
+  // Stats
+  statNumber:  {fontSize: 24, ...font.bold,     color: '#0F172A'},
+  price:       {fontSize: 18, ...font.bold,     color: '#0F172A'},
 };

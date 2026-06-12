@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import {View, Text} from 'react-native';
 import Icon from './Icon';
 
@@ -17,9 +17,10 @@ export default function VerifiedBadge() {
       }}
     >
       <Icon name="check-decagram" size={12} color="#192433" />
-      <Text style={{fontSize: 11, fontWeight: '600', color: '#192433'}}>
+      <Text style={{fontSize: 11, fontWeight: '600', color: '#101828'}}>
         Verified
       </Text>
     </View>
   );
 }
+

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import Icon from '@react-native-vector-icons/material-design-icons';
 import { useTranslation } from 'react-i18next';
@@ -16,7 +16,7 @@ export default function DemoFloatingBar() {
         position: 'absolute',
         top: 52,
         right: 12,
-        backgroundColor: '#192433',
+        backgroundColor: '#101828',
         borderRadius: 999,
         paddingHorizontal: 12,
         paddingVertical: 6,
@@ -31,10 +31,11 @@ export default function DemoFloatingBar() {
       }}
     >
       <Icon name="play-circle" size={16} color="white" />
-      <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700', marginLeft: 4 }}>{t('tour.ui.modeLabel')}</Text>
+      <Text style={{ color: '#fff', fontSize: 11, fontWeight: '600', marginLeft: 4 }}>{t('tour.ui.modeLabel')}</Text>
       <TouchableOpacity onPress={exitDemo} style={{ marginLeft: 8 }}>
         <Icon name="close-circle" size={18} color="white" />
       </TouchableOpacity>
     </View>
   );
 }
+

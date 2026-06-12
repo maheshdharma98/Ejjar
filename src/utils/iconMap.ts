@@ -56,18 +56,20 @@ export const subcategoryIcons: Record<string, string> = {
   oversized: 'truck',
 };
 
+// EJJAR Design System v1.0 — fixed category icon color pairs
 export const categoryColors: Record<string, string> = {
-  manpower: '#192433',
-  machinery: '#F59E0B',
-  vehicle: '#22C55E',
-  vehicles: '#22C55E',
-  shipping: '#8B5CF6',
+  manpower: '#C9974A',  // gold — form icons only
+  machinery: '#0369A1', // info blue
+  vehicle:   '#0369A1',
+  vehicles:  '#0369A1',
+  shipping:  '#D97706', // amber
 };
 
+// EJJAR Design System v1.0 — fixed category icon backgrounds
 export const categoryBgColors: Record<string, string> = {
-  manpower: '#E8EDF2',
-  machinery: '#FEF3C7',
-  vehicle: '#DCFCE7',
-  vehicles: '#DCFCE7',
-  shipping: '#F3E8FF',
+  manpower: '#FFF0D6', // amber-50
+  machinery: '#E0F2FE', // sky-100
+  vehicle:   '#E0F2FE',
+  vehicles:  '#E0F2FE',
+  shipping:  '#FEF3C7', // yellow-100
 };

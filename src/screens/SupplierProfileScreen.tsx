@@ -1,6 +1,5 @@
 import React, {useMemo, useState} from 'react';
 import {FlatList, I18nManager, ScrollView, Text, TouchableOpacity, View} from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -100,7 +99,7 @@ export default function SupplierProfileScreen() {
 
   if (!demoSupplier && !supplier) {
     return (
-      <View style={{flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center'}}>
+      <View style={{flex: 1, backgroundColor: '#F8FAFC', alignItems: 'center', justifyContent: 'center'}}>
         <Text style={{color: colors.textSecondary}}>{t('common.noResults')}</Text>
       </View>
     );
@@ -143,12 +142,16 @@ export default function SupplierProfileScreen() {
   const totalReviews = reviews.length || 1;
 
   return (
-    <View style={{flex: 1, backgroundColor: colors.background}}>
+    <View style={{flex: 1, backgroundColor: '#F8FAFC'}}>
 
-      {/* GRADIENT HERO HEADER */}
-      <LinearGradient
-        colors={[colors.primary, colors.primaryDark]}
-        style={{paddingTop: insets.top + 12, paddingBottom: 32, paddingHorizontal: 16}}
+      {/* DARK NAVY HERO HEADER */}
+      <View
+        style={{
+          backgroundColor: '#101828',
+          paddingTop: insets.top + 12,
+          paddingBottom: 32,
+          paddingHorizontal: 16,
+        }}
       >
         {/* Back + Share */}
         <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
@@ -177,10 +180,10 @@ export default function SupplierProfileScreen() {
               justifyContent: 'center',
             }}
           >
-            <Text style={{fontSize: 28, fontWeight: '700', color: '#FFFFFF'}}>{initials}</Text>
+            <Text style={{fontSize: 28, fontWeight: '600', color: '#FFFFFF'}}>{initials}</Text>
           </View>
 
-          <Text style={{fontSize: 20, fontWeight: '700', color: '#FFFFFF', marginTop: 12, textAlign: 'center'}}>
+          <Text style={{fontSize: 20, fontWeight: '600', color: '#FFFFFF', marginTop: 12, textAlign: 'center'}}>
             {displayCompany}
           </Text>
 
@@ -262,7 +265,7 @@ export default function SupplierProfileScreen() {
             </Text>
           </View>
         </View>
-      </LinearGradient>
+      </View>
 
       {/* TABS ROW — overlap header */}
       <View
@@ -345,7 +348,7 @@ export default function SupplierProfileScreen() {
                   >
                     <Icon name={stat.icon} size={20} color={stat.color} />
                   </View>
-                  <Text style={{fontSize: 22, fontWeight: '700', color: colors.textPrimary}}>{stat.value}</Text>
+                  <Text style={{fontSize: 22, fontWeight: '600', color: colors.textPrimary}}>{stat.value}</Text>
                   <Text style={{fontSize: 10, fontWeight: '600', color: colors.textSecondary, textTransform: 'uppercase', marginTop: 3}}>
                     {stat.label}
                   </Text>
@@ -374,7 +377,7 @@ export default function SupplierProfileScreen() {
                   >
                     <Icon name={stat.icon} size={20} color={stat.color} />
                   </View>
-                  <Text style={{fontSize: 22, fontWeight: '700', color: colors.textPrimary}}>{stat.value}</Text>
+                  <Text style={{fontSize: 22, fontWeight: '600', color: colors.textPrimary}}>{stat.value}</Text>
                   <Text style={{fontSize: 10, fontWeight: '600', color: colors.textSecondary, textTransform: 'uppercase', marginTop: 3}}>
                     {stat.label}
                   </Text>
@@ -390,7 +393,7 @@ export default function SupplierProfileScreen() {
                     <Text style={{fontSize: 11, color: colors.textSecondary, textTransform: 'uppercase', fontWeight: '600', marginBottom: 4}}>
                       {t('supplier.perDay')}
                     </Text>
-                    <Text style={{fontSize: 22, fontWeight: '700', color: colors.primary}}>
+                    <Text style={{fontSize: 22, fontWeight: '600', color: colors.primary}}>
                       {formatCurrency(demoSupplier.pricePerDay)}
                     </Text>
                   </View>
@@ -403,7 +406,7 @@ export default function SupplierProfileScreen() {
                     <Text style={{fontSize: 11, color: colors.textSecondary, textTransform: 'uppercase', fontWeight: '600', marginBottom: 4}}>
                       {t('supplier.perHour')}
                     </Text>
-                    <Text style={{fontSize: 22, fontWeight: '700', color: colors.textPrimary}}>
+                    <Text style={{fontSize: 22, fontWeight: '600', color: colors.textPrimary}}>
                       {formatCurrency(demoSupplier.pricePerHour)}
                     </Text>
                   </View>
@@ -536,7 +539,7 @@ export default function SupplierProfileScreen() {
                       <Icon name="check-circle" size={20} color={colors.success} />
                     </View>
                     {i < demoSupplier.certifications.length - 1 && (
-                      <View style={{height: 1, backgroundColor: colors.background}} />
+                      <View style={{height: 1, backgroundColor: '#F8FAFC'}} />
                     )}
                   </View>
                 ))
@@ -555,7 +558,7 @@ export default function SupplierProfileScreen() {
                     <Icon name="check-circle" size={20} color={colors.success} />
                   </View>
                   {i < CERTS.length - 1 && (
-                    <View style={{height: 1, backgroundColor: colors.background}} />
+                    <View style={{height: 1, backgroundColor: '#F8FAFC'}} />
                   )}
                 </View>
               ))
@@ -570,7 +573,7 @@ export default function SupplierProfileScreen() {
             <View style={[{backgroundColor: colors.card, borderRadius: 16, padding: 16, marginBottom: 12}, shadows.sm]}>
               <View style={{flexDirection: 'row', alignItems: 'center'}}>
                 <View style={{alignItems: 'center', marginRight: 20}}>
-                  <Text style={{fontSize: 40, fontWeight: '700', color: colors.textPrimary}}>
+                  <Text style={{fontSize: 40, fontWeight: '600', color: colors.textPrimary}}>
                     {displayRating.toFixed(1)}
                   </Text>
                   <StarRating rating={displayRating} size={16} />
@@ -583,7 +586,7 @@ export default function SupplierProfileScreen() {
                     <View key={star} style={{flexDirection: 'row', alignItems: 'center', marginBottom: 4, gap: 6}}>
                       <Text style={{fontSize: 11, color: colors.textSecondary, width: 8}}>{star}</Text>
                       <Icon name="star" size={11} color={colors.warning} />
-                      <View style={{flex: 1, height: 6, backgroundColor: colors.background, borderRadius: 3}}>
+                      <View style={{flex: 1, height: 6, backgroundColor: '#F8FAFC', borderRadius: 3}}>
                         <View
                           style={{
                             width: `${(count / totalReviews) * 100}%`,
@@ -632,7 +635,7 @@ export default function SupplierProfileScreen() {
                           justifyContent: 'center',
                         }}
                       >
-                        <Text style={{fontSize: 14, fontWeight: '700', color: colors.primary}}>{initLetter}</Text>
+                        <Text style={{fontSize: 14, fontWeight: '600', color: colors.primary}}>{initLetter}</Text>
                       </View>
                       <View style={{flex: 1}}>
                         <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
@@ -693,7 +696,7 @@ export default function SupplierProfileScreen() {
           paddingBottom: insets.bottom + 12,
           borderTopWidth: 1,
           borderTopColor: colors.border,
-          shadowColor: '#0F172A',
+          shadowColor: '#101828',
           shadowOffset: {width: 0, height: -4},
           shadowOpacity: 0.08,
           shadowRadius: 12,
@@ -723,7 +726,7 @@ export default function SupplierProfileScreen() {
           }}
         >
           <Icon name="send" size={20} color="#FFFFFF" />
-          <Text style={{fontSize: 16, fontWeight: '700', color: '#FFFFFF'}}>
+          <Text style={{fontSize: 16, fontWeight: '600', color: '#FFFFFF'}}>
             {t('supplier.sendRFQ')}
           </Text>
         </TouchableOpacity>
@@ -731,3 +734,5 @@ export default function SupplierProfileScreen() {
     </View>
   );
 }
+
+

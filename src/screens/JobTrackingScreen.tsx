@@ -1,6 +1,5 @@
 import React from 'react';
 import {Alert, I18nManager, Pressable, ScrollView, Text, TouchableOpacity, View} from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -26,12 +25,12 @@ function fmtDate(iso: string) {
 
 const getJobStatusConfig = (status: string) => {
   const configs: Record<string, {labelAr: string; labelEn: string; color: string}> = {
-    pending_start: {labelAr: 'قيد الانتظار', labelEn: 'Pending Start', color: '#6B7280'},
+    pending_start: {labelAr: 'قيد الانتظار', labelEn: 'Pending Start', color: '#64748B'},
     in_progress:   {labelAr: 'جارية',        labelEn: 'In Progress',   color: colors.warning},
-    paused:        {labelAr: 'متوقفة',       labelEn: 'Paused',        color: '#B45309'},
+    paused:        {labelAr: 'متوقفة',       labelEn: 'Paused',        color: '#E67E3A'},
     completed:     {labelAr: 'مكتملة',       labelEn: 'Completed',     color: colors.success},
     cancelled:     {labelAr: 'ملغاة',        labelEn: 'Cancelled',     color: colors.error},
-    disputed:      {labelAr: 'متنازع عليها', labelEn: 'Disputed',      color: '#DC2626'},
+    disputed:      {labelAr: 'متنازع عليها', labelEn: 'Disputed',      color: '#E67E3A'},
   };
   return configs[status] ?? configs.pending_start;
 };
@@ -55,9 +54,9 @@ export default function JobTrackingScreen() {
 
   if (!job) {
     return (
-      <View style={{flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center'}}>
+      <View style={{flex: 1, backgroundColor: '#F8FAFC', alignItems: 'center', justifyContent: 'center'}}>
         <Icon name="alert-circle-outline" size={48} color={colors.textSecondary} />
-        <Text style={{fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginTop: 16}}>
+        <Text style={{fontSize: 16, fontWeight: '600', color: colors.textPrimary, marginTop: 16}}>
           {isAr ? 'العمل غير موجود' : 'Job not found'}
         </Text>
         <TouchableOpacity
@@ -113,12 +112,9 @@ export default function JobTrackingScreen() {
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: colors.background}}>
-      {/* GRADIENT HEADER */}
-      <LinearGradient
-        colors={['#192433', '#0F1A26']}
-        style={{paddingTop: insets.top + 12, paddingBottom: 24, paddingHorizontal: 16}}
-      >
+    <View style={{flex: 1, backgroundColor: '#F8FAFC'}}>
+      {/* HEADER */}
+      <View style={{backgroundColor: '#101828', paddingTop: insets.top + 12, paddingBottom: 24, paddingHorizontal: 16}}>
         <View style={{flexDirection: 'row', alignItems: 'center'}}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
@@ -132,7 +128,7 @@ export default function JobTrackingScreen() {
           </TouchableOpacity>
 
           <View style={{flex: 1}}>
-            <Text style={{fontSize: 18, fontWeight: '700', color: '#FFFFFF'}} numberOfLines={1}>
+            <Text style={{fontSize: 18, fontWeight: '600', color: '#FFFFFF'}} numberOfLines={1}>
               {getLocalizedField(job, 'title')}
             </Text>
             <Text style={{fontSize: 12, color: 'rgba(255,255,255,0.75)', marginTop: 2}}>
@@ -175,7 +171,7 @@ export default function JobTrackingScreen() {
             </Text>
           </View>
         </View>
-      </LinearGradient>
+      </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -189,7 +185,7 @@ export default function JobTrackingScreen() {
           }}>
             <Icon name="check-circle" size={22} color={colors.success} />
             <View style={{flex: 1}}>
-              <Text style={{fontSize: 14, fontWeight: '700', color: '#15803D'}}>
+              <Text style={{fontSize: 14, fontWeight: '600', color: '#166534'}}>
                 {isAr ? 'تم إتمام العمل بنجاح' : 'Job Completed Successfully'}
               </Text>
               <Text style={{fontSize: 12, color: '#166534', marginTop: 2}}>
@@ -202,11 +198,11 @@ export default function JobTrackingScreen() {
         {/* CANCELLED BANNER */}
         {isCancelled && (
           <View style={{
-            backgroundColor: colors.errorLight, marginHorizontal: 16, marginTop: 12,
+            backgroundColor: '#FEE2E2', marginHorizontal: 16, marginTop: 12,
             borderRadius: 14, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10,
           }}>
             <Icon name="close-circle" size={22} color={colors.error} />
-            <Text style={{fontSize: 14, fontWeight: '700', color: colors.error}}>
+            <Text style={{fontSize: 14, fontWeight: '600', color: '#991B1B'}}>
               {isAr ? 'تم إلغاء العمل' : 'Job Cancelled'}
             </Text>
           </View>
@@ -214,8 +210,9 @@ export default function JobTrackingScreen() {
 
         {/* TIMELINE CARD */}
         <View style={[{
-          backgroundColor: colors.card, borderRadius: 20,
+          backgroundColor: '#FFFFFF', borderRadius: 20,
           marginHorizontal: 16, marginTop: 12, padding: 16,
+          borderWidth: 1, borderColor: '#E2E8F0',
         }, shadows.md]}>
           <SectionHeader title={isAr ? 'التقدم' : 'Progress'} iconName="calendar-range" />
 
@@ -231,7 +228,7 @@ export default function JobTrackingScreen() {
 
             <View style={{flexDirection: 'row', justifyContent: 'space-between', marginTop: 6}}>
               <Text style={{fontSize: 11, color: colors.textSecondary}}>{fmtDate(job.startDate)}</Text>
-              <Text style={{fontSize: 11, fontWeight: '700', color: isCompleted ? colors.success : colors.warning}}>
+              <Text style={{fontSize: 11, fontWeight: '600', color: isCompleted ? colors.success : colors.warning}}>
                 {progressPct}%
               </Text>
               <Text style={{fontSize: 11, color: colors.textSecondary}}>
@@ -244,8 +241,9 @@ export default function JobTrackingScreen() {
         {/* MILESTONES */}
         {job.milestones.length > 0 && (
           <View style={[{
-            backgroundColor: colors.card, borderRadius: 20,
+            backgroundColor: '#FFFFFF', borderRadius: 20,
             marginHorizontal: 16, marginTop: 12, padding: 16,
+            borderWidth: 1, borderColor: '#E2E8F0',
           }, shadows.sm]}>
             <SectionHeader title={isAr ? 'المراحل' : 'Milestones'} iconName="flag-checkered" />
 
@@ -263,7 +261,7 @@ export default function JobTrackingScreen() {
                     backgroundColor: milestone.completed ? '#F0FDF4' : '#F8FAFC',
                     borderRadius: 12, padding: 12,
                     borderWidth: 1,
-                    borderColor: milestone.completed ? '#BBF7D0' : colors.border,
+                    borderColor: milestone.completed ? '#BBF7D0' : '#E2E8F0',
                   }]}
                 >
                   <View style={{
@@ -280,7 +278,7 @@ export default function JobTrackingScreen() {
                   <View style={{flex: 1}}>
                     <Text style={{
                       fontSize: 13, fontWeight: '600',
-                      color: milestone.completed ? '#15803D' : colors.textPrimary,
+                      color: milestone.completed ? '#166634' : colors.textPrimary,
                     }}>
                       {isAr ? milestone.nameAr : milestone.name}
                     </Text>
@@ -303,8 +301,9 @@ export default function JobTrackingScreen() {
 
         {/* SUPPLIER CONTACT */}
         <View style={[{
-          backgroundColor: colors.card, borderRadius: 20,
+          backgroundColor: '#FFFFFF', borderRadius: 20,
           marginHorizontal: 16, marginTop: 12, padding: 16,
+          borderWidth: 1, borderColor: '#E2E8F0',
         }, shadows.sm]}>
           <SectionHeader title={isAr ? 'المورد' : 'Supplier'} iconName="account-tie" />
 
@@ -320,7 +319,7 @@ export default function JobTrackingScreen() {
                     <CategoryIcon category={job.category} size={20} />
                   </View>
                   <View style={{flex: 1}}>
-                    <Text style={{fontSize: 15, fontWeight: '700', color: colors.textPrimary}}>
+                    <Text style={{fontSize: 15, fontWeight: '600', color: colors.textPrimary}}>
                       {isAr ? supplier.nameAr : supplier.name}
                     </Text>
                     <Text style={{fontSize: 12, color: colors.textSecondary, marginTop: 2}}>
@@ -354,7 +353,7 @@ export default function JobTrackingScreen() {
               <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
                 <View style={{
                   width: 44, height: 44, borderRadius: 22,
-                  backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center',
+                  backgroundColor: '#E2E8F0', alignItems: 'center', justifyContent: 'center',
                 }}>
                   <Icon name="account-tie" size={22} color={colors.textSecondary} />
                 </View>
@@ -368,8 +367,9 @@ export default function JobTrackingScreen() {
 
         {/* JOB DETAILS */}
         <View style={[{
-          backgroundColor: colors.card, borderRadius: 20,
+          backgroundColor: '#FFFFFF', borderRadius: 20,
           marginHorizontal: 16, marginTop: 12, padding: 16,
+          borderWidth: 1, borderColor: '#E2E8F0',
         }, shadows.sm]}>
           <SectionHeader title={isAr ? 'تفاصيل العمل' : 'Job Details'} iconName="briefcase-outline" />
 
@@ -380,14 +380,14 @@ export default function JobTrackingScreen() {
                 {job.category}
               </Text>
             </View>
-            <View style={{height: 1, backgroundColor: colors.border}} />
+            <View style={{height: 1, backgroundColor: '#E2E8F0'}} />
             <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
               <Text style={{fontSize: 13, color: colors.textSecondary}}>{isAr ? 'المبلغ' : 'Amount'}</Text>
               <Text style={{fontSize: 13, fontWeight: '600', color: colors.primary}}>
                 {formatCurrency(job.amount)}
               </Text>
             </View>
-            <View style={{height: 1, backgroundColor: colors.border}} />
+            <View style={{height: 1, backgroundColor: '#E2E8F0'}} />
             <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
               <Text style={{fontSize: 13, color: colors.textSecondary}}>{isAr ? 'تاريخ البدء' : 'Start Date'}</Text>
               <Text style={{fontSize: 13, fontWeight: '600', color: colors.textPrimary}}>
@@ -396,7 +396,7 @@ export default function JobTrackingScreen() {
             </View>
             {job.completionDate && (
               <>
-                <View style={{height: 1, backgroundColor: colors.border}} />
+                <View style={{height: 1, backgroundColor: '#E2E8F0'}} />
                 <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
                   <Text style={{fontSize: 13, color: colors.textSecondary}}>{isAr ? 'تاريخ الإتمام' : 'Completion'}</Text>
                   <Text style={{fontSize: 13, fontWeight: '600', color: colors.success}}>
@@ -413,25 +413,25 @@ export default function JobTrackingScreen() {
       {!isDone && (
         <View style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
-          backgroundColor: colors.card,
+          backgroundColor: '#FFFFFF',
           paddingHorizontal: 16,
           paddingTop: 12,
           paddingBottom: insets.bottom + 12,
           flexDirection: 'row', gap: 10,
-          borderTopWidth: 1, borderTopColor: colors.border,
+          borderTopWidth: 1, borderTopColor: '#E2E8F0',
         }}>
           <TouchableOpacity
             onPress={handleCancelJob}
             activeOpacity={0.85}
             style={{
               flex: 1, paddingVertical: 14, borderRadius: 14,
-              backgroundColor: colors.errorLight,
+              backgroundColor: '#FEE2E2',
               alignItems: 'center', justifyContent: 'center',
               flexDirection: 'row', gap: 6,
             }}
           >
             <Icon name="close-circle-outline" size={18} color={colors.error} />
-            <Text style={{fontSize: 15, fontWeight: '700', color: colors.error}}>
+            <Text style={{fontSize: 15, fontWeight: '600', color: colors.error}}>
               {isAr ? 'إلغاء' : 'Cancel Job'}
             </Text>
           </TouchableOpacity>
@@ -447,7 +447,7 @@ export default function JobTrackingScreen() {
             }}
           >
             <Icon name="check-circle-outline" size={18} color="#FFFFFF" />
-            <Text style={{fontSize: 15, fontWeight: '700', color: '#FFFFFF'}}>
+            <Text style={{fontSize: 15, fontWeight: '600', color: '#FFFFFF'}}>
               {isAr ? 'إتمام العمل' : 'Mark as Complete'}
             </Text>
           </TouchableOpacity>

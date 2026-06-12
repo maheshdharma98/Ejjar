@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+﻿import React, {useState} from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -357,24 +357,21 @@ export default function RFQFormScreen() {
   void shpPickupCountry; void shpDropoffCountry; void country;
 
   return (
-    <View style={{flex: 1, backgroundColor: colors.background}}>
+    <View style={{flex: 1, backgroundColor: '#F8FAFC'}}>
       <KeyboardAvoidingView
         style={{flex: 1}}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         {/* HEADER */}
         <View
-          style={[
-            {
-              backgroundColor: colors.card,
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingHorizontal: 16,
-              paddingTop: insets.top + 12,
-              paddingBottom: 12,
-            },
-            shadows.sm,
-          ]}
+          style={{
+            backgroundColor: '#101828',
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: 16,
+            paddingTop: insets.top + 12,
+            paddingBottom: 12,
+          }}
         >
           <TouchableOpacity
             onPress={() => navigation.goBack()}
@@ -382,14 +379,14 @@ export default function RFQFormScreen() {
             hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
           >
             <View style={{transform: [{scaleX: I18nManager.isRTL ? -1 : 1}]}}>
-              <Icon name="arrow-left" size={24} color={colors.primary} />
+              <Icon name="arrow-left" size={24} color="#E67E3A" />
             </View>
           </TouchableOpacity>
-          <Text style={{fontSize: 17, fontWeight: '700', color: colors.textPrimary, flex: 1}}>
+          <Text style={{fontSize: 17, fontWeight: '600', color: '#FFFFFF', flex: 1}}>
             {t('rfq.title')}
           </Text>
           <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-            <Icon name="close" size={22} color={colors.textSecondary} />
+            <Icon name="close" size={22} color="#94A3B8" />
           </TouchableOpacity>
         </View>
 
@@ -411,7 +408,7 @@ export default function RFQFormScreen() {
           >
             <Icon name="bullhorn-outline" size={28} color={colors.primary} />
             <View style={{flex: 1, marginLeft: 12}}>
-              <Text style={{fontSize: 13, fontWeight: '700', color: colors.primary}}>
+              <Text style={{fontSize: 13, fontWeight: '600', color: colors.primary}}>
                 Your RFQ broadcasts to all matching suppliers
               </Text>
               <Text style={{fontSize: 12, color: '#475569', marginTop: 3}}>
@@ -891,7 +888,7 @@ export default function RFQFormScreen() {
                 marginBottom: 16,
               }}
             />
-            <Text style={{fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 12}}>
+            <Text style={{fontSize: 18, fontWeight: '600', color: colors.textPrimary, marginBottom: 12}}>
               {picker.title}
             </Text>
             <FlatList
@@ -943,7 +940,7 @@ export default function RFQFormScreen() {
             bottom: 0,
             left: 0,
             right: 0,
-            backgroundColor: 'rgba(20,61,155,0.94)',
+            backgroundColor: 'rgba(16,24,40,0.96)',
             alignItems: 'center',
             justifyContent: 'center',
             paddingHorizontal: 32,
@@ -954,7 +951,7 @@ export default function RFQFormScreen() {
             style={{
               color: '#FFFFFF',
               fontSize: 20,
-              fontWeight: '700',
+              fontWeight: '600',
               marginTop: 20,
               textAlign: 'center',
               writingDirection: i18n.language === 'ar' ? 'rtl' : 'ltr',
@@ -981,3 +978,4 @@ export default function RFQFormScreen() {
     </View>
   );
 }
+

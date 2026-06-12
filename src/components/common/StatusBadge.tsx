@@ -9,78 +9,63 @@ interface StatusConfig {
   label: string;
 }
 
+// EJJAR Design System v1.0 — semantic status pairs
 const STATUS_MAP: Record<string, StatusConfig> = {
   new: {
-    bg: '#EFF6FF',
-    color: '#1D4ED8',
-    icon: 'alert-circle-outline',
-    label: 'New',
+    bg: '#E0F2FE', color: '#0369A1',
+    icon: 'alert-circle-outline', label: 'New',
   },
   supplier_responded: {
-    bg: '#EFF6FF',
-    color: '#1D4ED8',
-    icon: 'message-text-outline',
-    label: 'Quotes In',
+    bg: '#FEF9C3', color: '#854D0E',
+    icon: 'message-text-outline', label: 'Quotes In',
   },
   quotes_in: {
-    bg: '#EFF6FF',
-    color: '#1D4ED8',
-    icon: 'message-text-outline',
-    label: 'Quotes In',
+    bg: '#FEF9C3', color: '#854D0E',
+    icon: 'message-text-outline', label: 'Quotes In',
   },
   negotiation: {
-    bg: '#FFFBEB',
-    color: '#B45309',
-    icon: 'swap-horizontal',
-    label: 'Negotiating',
+    bg: '#FEF9C3', color: '#854D0E',
+    icon: 'swap-horizontal', label: 'Negotiating',
   },
   negotiating: {
-    bg: '#FFFBEB',
-    color: '#B45309',
-    icon: 'swap-horizontal',
-    label: 'Negotiating',
+    bg: '#FEF9C3', color: '#854D0E',
+    icon: 'swap-horizontal', label: 'Negotiating',
   },
   accepted: {
-    bg: '#F0FDF4',
-    color: '#15803D',
-    icon: 'check-circle-outline',
-    label: 'Accepted',
+    bg: '#DCFCE7', color: '#166534',
+    icon: 'check-circle-outline', label: 'Accepted',
   },
   confirmed: {
-    bg: '#ECFDF5',
-    color: '#065F46',
-    icon: 'shield-check',
-    label: 'Confirmed',
+    bg: '#E0F2FE', color: '#0369A1',
+    icon: 'shield-check', label: 'Confirmed',
   },
   completed: {
-    bg: '#F1F5F9',
-    color: '#334155',
-    icon: 'check-decagram',
-    label: 'Completed',
+    bg: '#DCFCE7', color: '#166534',
+    icon: 'check-decagram', label: 'Completed',
   },
   rejected: {
-    bg: '#FEF2F2',
-    color: '#B91C1C',
-    icon: 'close-circle-outline',
-    label: 'Rejected',
+    bg: '#FEE2E2', color: '#991B1B',
+    icon: 'close-circle-outline', label: 'Rejected',
+  },
+  cancelled: {
+    bg: '#FEE2E2', color: '#991B1B',
+    icon: 'cancel', label: 'Cancelled',
   },
   in_progress: {
-    bg: '#FFFBEB',
-    color: '#B45309',
-    icon: 'progress-clock',
-    label: 'In Progress',
+    bg: '#FEF9C3', color: '#854D0E',
+    icon: 'progress-clock', label: 'In Progress',
   },
   available: {
-    bg: '#F0FDF4',
-    color: '#15803D',
-    icon: 'check-circle',
-    label: 'Available',
+    bg: '#DCFCE7', color: '#166534',
+    icon: 'check-circle', label: 'Available',
   },
   booked: {
-    bg: '#FEF2F2',
-    color: '#B91C1C',
-    icon: 'calendar-lock',
-    label: 'Booked',
+    bg: '#FEF9C3', color: '#854D0E',
+    icon: 'calendar-lock', label: 'Booked',
+  },
+  pending: {
+    bg: '#F1F5F9', color: '#475569',
+    icon: 'clock-outline', label: 'Pending',
   },
 };
 
@@ -91,7 +76,7 @@ interface Props {
 export default function StatusBadge({status}: Props) {
   const config = STATUS_MAP[status] ?? {
     bg: '#F1F5F9',
-    color: '#334155',
+    color: '#475569',
     icon: 'help-circle-outline',
     label: status.replace(/_/g, ' '),
   };
@@ -102,7 +87,7 @@ export default function StatusBadge({status}: Props) {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: config.bg,
-        borderRadius: 20,
+        borderRadius: 9999,
         paddingHorizontal: 8,
         paddingVertical: 4,
         alignSelf: 'flex-start',

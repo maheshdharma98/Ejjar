@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import {View, Text, TouchableOpacity} from 'react-native';
 import Icon from './Icon';
 
@@ -28,7 +28,7 @@ export default function SectionHeader({title, iconName, action}: Props) {
         style={{
           flex: 1,
           fontSize: 16,
-          fontWeight: '700',
+          fontWeight: '600',
           color: '#0F172A',
         }}
       >
@@ -36,7 +36,7 @@ export default function SectionHeader({title, iconName, action}: Props) {
       </Text>
       {action && (
         <TouchableOpacity onPress={action.onPress} activeOpacity={0.7}>
-          <Text style={{fontSize: 13, fontWeight: '600', color: '#192433'}}>
+          <Text style={{fontSize: 13, fontWeight: '600', color: '#101828'}}>
             {action.label}
           </Text>
         </TouchableOpacity>
@@ -44,3 +44,4 @@ export default function SectionHeader({title, iconName, action}: Props) {
     </View>
   );
 }
+

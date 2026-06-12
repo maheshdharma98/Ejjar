@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import {View} from 'react-native';
 import Icon from './Icon';
 import {categoryIcons, categoryColors, categoryBgColors} from '../../utils/iconMap';
@@ -11,7 +11,7 @@ interface Props {
 
 export default function CategoryIcon({category, size = 24, withBackground = true}: Props) {
   const iconName = categoryIcons[category] ?? 'briefcase-outline';
-  const color = categoryColors[category] ?? '#192433';
+  const color = categoryColors[category] ?? '#101828';
   const bg = categoryBgColors[category] ?? '#E8EDF2';
   const padding = Math.round(size * 0.5);
   const borderRadius = Math.round((size + padding * 2) / 2);
@@ -35,3 +35,4 @@ export default function CategoryIcon({category, size = 24, withBackground = true
     </View>
   );
 }
+

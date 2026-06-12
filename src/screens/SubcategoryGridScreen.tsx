@@ -41,20 +41,20 @@ export default function SubcategoryGridScreen() {
   const subcategories = SUBCATEGORIES[categoryId] ?? [];
 
   return (
-    <View style={{flex: 1, backgroundColor: colors.background}}>
-      {/* Category heading */}
+    <View style={{flex: 1, backgroundColor: '#F8FAFC'}}>
+      {/* Category heading — dark navy */}
       <View
         style={{
-          backgroundColor: colors.primary,
+          backgroundColor: '#101828',
           paddingHorizontal: 20,
           paddingTop: 4,
           paddingBottom: 20,
         }}
       >
-        <Text style={{color: '#FFFFFF', fontSize: 22, fontWeight: '700'}}>
+        <Text style={{color: '#ffffff', fontSize: 20, fontWeight: '600'}}>
           {t(`demo:categories.${categoryId}`)}
         </Text>
-        <Text style={{color: 'rgba(255,255,255,0.75)', fontSize: 13, marginTop: 4}}>
+        <Text style={{color: '#64748B', fontSize: 12, marginTop: 4}}>
           {t(`home.${categoryId}Subtitle`)}
         </Text>
       </View>
@@ -83,15 +83,15 @@ export default function SubcategoryGridScreen() {
                 {
                   width: '47%',
                   aspectRatio: 1,
-                  backgroundColor: sub.enabled ? colors.card : '#F1F5F9',
+                  backgroundColor: sub.enabled ? '#FFFFFF' : '#F1F5F9',
                   borderRadius: 20,
                   alignItems: 'center',
                   justifyContent: 'center',
                   padding: 16,
                   opacity: sub.enabled ? 1 : 0.65,
                   position: 'relative',
-                  borderWidth: sub.enabled ? 1 : 0,
-                  borderColor: colors.border,
+                  borderWidth: 1.5,
+                  borderColor: sub.enabled ? '#E2E8F0' : 'transparent',
                 },
                 sub.enabled ? shadows.md : {},
               ]}
@@ -101,7 +101,7 @@ export default function SubcategoryGridScreen() {
                   width: 56,
                   height: 56,
                   borderRadius: 16,
-                  backgroundColor: sub.enabled ? colors.primaryLight : '#E2E8F0',
+                  backgroundColor: sub.enabled ? '#FFF0D6' : '#F1F5F9',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
@@ -109,15 +109,15 @@ export default function SubcategoryGridScreen() {
                 <Icon
                   name={sub.icon as any}
                   size={30}
-                  color={sub.enabled ? colors.primary : '#94A3B8'}
+                  color={sub.enabled ? '#C9974A' : '#64748B'}
                 />
               </View>
 
               <Text
                 style={{
-                  fontSize: 14,
-                  fontWeight: '700',
-                  color: sub.enabled ? colors.textPrimary : '#94A3B8',
+                  fontSize: 13,
+                  fontWeight: '600',
+                  color: sub.enabled ? '#101828' : '#64748B',
                   marginTop: 12,
                   textAlign: 'center',
                 }}
@@ -133,13 +133,13 @@ export default function SubcategoryGridScreen() {
                     position: 'absolute',
                     top: 8,
                     end: 8,
-                    backgroundColor: '#F59E0B',
+                    backgroundColor: '#E67E3A',
                     paddingHorizontal: 7,
                     paddingVertical: 3,
                     borderRadius: 8,
                   }}
                 >
-                  <Text style={{color: '#FFFFFF', fontSize: 9, fontWeight: '700'}}>
+                  <Text style={{color: '#FFFFFF', fontSize: 9, fontWeight: '600'}}>
                     {t('home.comingSoon')}
                   </Text>
                 </View>

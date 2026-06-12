@@ -64,7 +64,7 @@ export default function RFQDetailScreen() {
 
   if (!rfq) {
     return (
-      <View style={{flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center'}}>
+      <View style={{flex: 1, backgroundColor: '#F8FAFC', alignItems: 'center', justifyContent: 'center'}}>
         <Text style={{color: colors.textSecondary}}>
           {isAr ? 'الطلب غير موجود' : 'RFQ not found'}
         </Text>
@@ -150,13 +150,13 @@ export default function RFQDetailScreen() {
   void selectedQuoteId;
 
   return (
-    <View style={{flex: 1, backgroundColor: colors.background}}>
+    <View style={{flex: 1, backgroundColor: '#F8FAFC'}}>
 
       {/* HEADER */}
       <View
         style={[
           {
-            backgroundColor: colors.card,
+            backgroundColor: '#101828',
             flexDirection: 'row',
             alignItems: 'center',
             paddingHorizontal: 16,
@@ -172,27 +172,27 @@ export default function RFQDetailScreen() {
           hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
         >
           <View style={{transform: [{scaleX: I18nManager.isRTL ? -1 : 1}]}}>
-            <Icon name="arrow-left" size={24} color={colors.primary} />
+            <Icon name="arrow-left" size={24} color="#E67E3A" />
           </View>
         </TouchableOpacity>
         <View style={{flex: 1}}>
-          <Text style={{fontSize: 17, fontWeight: '700', color: colors.textPrimary}}>
+          <Text style={{fontSize: 17, fontWeight: '600', color: '#FFFFFF'}}>
             {t('rfq.title')}
           </Text>
         </View>
         <View
           style={{
-            backgroundColor: colors.primaryLight,
+            backgroundColor: 'rgba(255,255,255,0.12)',
             borderRadius: 20,
             paddingHorizontal: 10,
             paddingVertical: 4,
             marginRight: 8,
           }}
         >
-          <Text style={{fontSize: 11, fontWeight: '600', color: colors.primary}}>#{rfq.id.slice(-6).toUpperCase()}</Text>
+          <Text style={{fontSize: 11, fontWeight: '600', color: '#FFFFFF'}}>#{rfq.id.slice(-6).toUpperCase()}</Text>
         </View>
         <TouchableOpacity hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-          <Icon name="share-variant" size={20} color={colors.textSecondary} />
+          <Icon name="share-variant" size={20} color="rgba(255,255,255,0.7)" />
         </TouchableOpacity>
       </View>
 
@@ -201,7 +201,7 @@ export default function RFQDetailScreen() {
         {/* STATUS STEPPER */}
         <View
           style={[
-            {backgroundColor: colors.card, marginHorizontal: 16, marginTop: 12, borderRadius: 16, paddingVertical: 20},
+            {backgroundColor: '#FFFFFF', marginHorizontal: 16, marginTop: 12, borderRadius: 16, paddingVertical: 20, borderWidth: 1, borderColor: '#E2E8F0'},
             shadows.sm,
           ]}
         >
@@ -246,7 +246,7 @@ export default function RFQDetailScreen() {
                     <Text
                       style={{
                         fontSize: 10,
-                        fontWeight: isCurrent ? '700' : '400',
+                        fontWeight: isCurrent ? '600' : '400',
                         color: textColor,
                         textAlign: 'center',
                         marginTop: 6,
@@ -277,11 +277,11 @@ export default function RFQDetailScreen() {
         </View>
 
         {/* RFQ SUMMARY CARD */}
-        <View style={[{backgroundColor: colors.card, borderRadius: 16, marginHorizontal: 16, marginTop: 12, padding: 16}, shadows.sm]}>
+        <View style={[{backgroundColor: '#FFFFFF', borderRadius: 16, marginHorizontal: 16, marginTop: 12, padding: 16, borderWidth: 1, borderColor: '#E2E8F0'}, shadows.sm]}>
           <View style={{flexDirection: 'row', alignItems: 'center'}}>
             <CategoryIcon category={rfq.category} size={24} withBackground />
             <View style={{flex: 1, marginStart: 12}}>
-              <Text style={{fontSize: 15, fontWeight: '700', color: colors.textPrimary}} numberOfLines={2}>
+              <Text style={{fontSize: 15, fontWeight: '600', color: colors.textPrimary}} numberOfLines={2}>
                 {getLocalizedField(rfq, 'title')}
               </Text>
               <Text style={{fontSize: 12, color: colors.textSecondary, marginTop: 2}}>
@@ -316,11 +316,11 @@ export default function RFQDetailScreen() {
         {/* BROADCAST BANNER */}
         <View style={{
           marginHorizontal: 16, marginTop: 12,
-          backgroundColor: '#EEF2FF', borderRadius: 12, padding: 12,
+          backgroundColor: '#E0F2FE', borderRadius: 12, padding: 12,
           flexDirection: 'row', alignItems: 'center', gap: 8,
         }}>
-          <Icon name="broadcast" size={18} color="#4F46E5" />
-          <Text style={{color: '#4F46E5', fontSize: 13, fontWeight: '600', flex: 1}}>
+          <Icon name="broadcast" size={18} color="#0369A1" />
+          <Text style={{color: '#0369A1', fontSize: 13, fontWeight: '600', flex: 1}}>
             {isAr
               ? `تم البث إلى ${rfq.broadcastedTo?.length ?? 0} مورد`
               : `Broadcasted to ${rfq.broadcastedTo?.length ?? 0} suppliers`}
@@ -328,7 +328,7 @@ export default function RFQDetailScreen() {
         </View>
 
         {/* QUOTE THREAD */}
-        <Text style={{fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginHorizontal: 16, marginTop: 20, marginBottom: 12}}>
+        <Text style={{fontSize: 16, fontWeight: '600', color: colors.textPrimary, marginHorizontal: 16, marginTop: 20, marginBottom: 12}}>
           {isAr ? 'خيط العروض' : 'Quote Thread'}
           {(rfq.quotes?.length ?? 0) > 0 && ` (${rfq.quotes.length})`}
         </Text>
@@ -338,7 +338,7 @@ export default function RFQDetailScreen() {
             <View style={{width: 80, height: 80, borderRadius: 40, backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 16}}>
               <Icon name="chat-outline" size={40} color={colors.primary} />
             </View>
-            <Text style={{fontSize: 16, fontWeight: '700', color: colors.textPrimary, textAlign: 'center'}}>
+            <Text style={{fontSize: 16, fontWeight: '600', color: colors.textPrimary, textAlign: 'center'}}>
               {isAr ? 'في انتظار الردود' : 'Awaiting Responses'}
             </Text>
             <Text style={{fontSize: 13, color: colors.textSecondary, textAlign: 'center', marginTop: 6, lineHeight: 20}}>
@@ -360,7 +360,7 @@ export default function RFQDetailScreen() {
                 }}
               >
                 {/* Role label + timestamp */}
-                <Text style={{fontSize: 11, color: '#9CA3AF', marginBottom: 4, marginHorizontal: 4}}>
+                <Text style={{fontSize: 11, color: '#64748B', marginBottom: 4, marginHorizontal: 4}}>
                   {isFromSupplier
                     ? (isAr ? 'المورد' : 'Supplier')
                     : (isAr ? 'أنت' : 'You')}
@@ -370,26 +370,26 @@ export default function RFQDetailScreen() {
                 {/* Quote bubble */}
                 <View style={{
                   maxWidth: '85%',
-                  backgroundColor: isFromContractor ? '#192433' : colors.card,
+                  backgroundColor: isFromContractor ? '#101828' : '#FFFFFF',
                   borderRadius: 16,
                   borderBottomEndRadius: isFromContractor ? 4 : 16,
                   borderBottomStartRadius: isFromSupplier ? 4 : 16,
                   padding: 14,
                   borderWidth: isFromSupplier ? 1 : 0,
-                  borderColor: colors.border,
+                  borderColor: '#E2E8F0',
                   shadowColor: '#000',
                   shadowOffset: {width: 0, height: 1},
                   shadowOpacity: 0.08,
                   shadowRadius: 4,
                   elevation: 2,
                 }}>
-                  <Text style={{fontSize: 22, fontWeight: '800', color: isFromContractor ? '#BB8D5A' : colors.primary, marginBottom: 2}}>
+                  <Text style={{fontSize: 22, fontWeight: '700', color: isFromContractor ? '#E67E3A' : colors.primary, marginBottom: 2}}>
                     {formatCurrency(quote.amount)}
                   </Text>
-                  <Text style={{fontSize: 12, color: isFromContractor ? 'rgba(255,255,255,0.65)' : '#9CA3AF', marginBottom: 8}}>
+                  <Text style={{fontSize: 12, color: isFromContractor ? 'rgba(255,255,255,0.65)' : '#64748B', marginBottom: 8}}>
                     {getLocalizedField(quote, 'duration')}
                   </Text>
-                  <Text style={{fontSize: 14, color: isFromContractor ? '#FFFFFF' : '#374151', lineHeight: 20}}>
+                  <Text style={{fontSize: 14, color: isFromContractor ? '#FFFFFF' : '#1A1A2E', lineHeight: 20}}>
                     {getLocalizedField(quote, 'message')}
                   </Text>
                 </View>
@@ -399,10 +399,10 @@ export default function RFQDetailScreen() {
                   <View style={{flexDirection: 'row', gap: 8, marginTop: 8, marginHorizontal: 4}}>
                     <Pressable
                       onPress={() => handleAcceptQuote(quote.id)}
-                      style={{backgroundColor: '#10B981', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 6}}
+                      style={{backgroundColor: '#166534', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 6}}
                     >
                       <Icon name="check" size={16} color="#FFFFFF" />
-                      <Text style={{color: '#FFFFFF', fontWeight: '700', fontSize: 13}}>
+                      <Text style={{color: '#FFFFFF', fontWeight: '600', fontSize: 13}}>
                         {isAr ? 'قبول' : 'Accept'}
                       </Text>
                     </Pressable>
@@ -415,7 +415,7 @@ export default function RFQDetailScreen() {
                       style={{backgroundColor: '#F59E0B', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 6}}
                     >
                       <Icon name="swap-horizontal" size={16} color="#FFFFFF" />
-                      <Text style={{color: '#FFFFFF', fontWeight: '700', fontSize: 13}}>
+                      <Text style={{color: '#FFFFFF', fontWeight: '600', fontSize: 13}}>
                         {isAr ? 'عرض مقابل' : 'Counter'}
                       </Text>
                     </Pressable>
@@ -430,9 +430,9 @@ export default function RFQDetailScreen() {
 
                 {/* Accepted banner */}
                 {rfq.status === 'accepted' && isLatest && isFromSupplier && (
-                  <View style={{backgroundColor: '#D1FAE5', borderRadius: 10, padding: 10, marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 8}}>
-                    <Icon name="check-circle" size={18} color="#10B981" />
-                    <Text style={{color: '#065F46', fontWeight: '600', fontSize: 13}}>
+                  <View style={{backgroundColor: '#DCFCE7', borderRadius: 10, padding: 10, marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                    <Icon name="check-circle" size={18} color="#166534" />
+                    <Text style={{color: '#166534', fontWeight: '600', fontSize: 13}}>
                       {isAr
                         ? `✓ تم قبول هذا العرض — ${formatCurrency(rfq.finalAmount ?? 0)}`
                         : `✓ Quote accepted — ${formatCurrency(rfq.finalAmount ?? 0)}`}
@@ -487,17 +487,17 @@ export default function RFQDetailScreen() {
       >
         <View style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end'}}>
           <View style={{
-            backgroundColor: '#FFFFFF',
+            backgroundColor: '#F8FAFC',
             borderTopLeftRadius: 24,
             borderTopRightRadius: 24,
             padding: 24,
             paddingBottom: insets.bottom + 24,
           }}>
-            <Text style={{fontSize: 18, fontWeight: '700', color: '#192433', marginBottom: 20}}>
+            <Text style={{fontSize: 18, fontWeight: '600', color: '#101828', marginBottom: 20}}>
               {isAr ? 'تقديم عرض مقابل' : 'Submit Counter Offer'}
             </Text>
 
-            <Text style={{fontSize: 13, color: '#6B7280', marginBottom: 8}}>
+            <Text style={{fontSize: 13, color: '#64748B', marginBottom: 8}}>
               {isAr ? 'المبلغ المقترح (ر.ع.)' : 'Your Offer Amount (OMR)'}
             </Text>
             <TextInput
@@ -505,21 +505,21 @@ export default function RFQDetailScreen() {
               onChangeText={setCounterAmount}
               keyboardType="numeric"
               placeholder="0"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor="#64748B"
               style={{
                 borderWidth: 1.5,
                 borderColor: colors.primary,
                 borderRadius: 12,
                 padding: 14,
                 fontSize: 26,
-                fontWeight: '700',
-                color: '#192433',
+                fontWeight: '600',
+                color: '#101828',
                 marginBottom: 16,
                 textAlign: 'center',
               }}
             />
 
-            <Text style={{fontSize: 13, color: '#6B7280', marginBottom: 8}}>
+            <Text style={{fontSize: 13, color: '#64748B', marginBottom: 8}}>
               {isAr ? 'رسالة (اختياري)' : 'Message (optional)'}
             </Text>
             <TextInput
@@ -528,14 +528,14 @@ export default function RFQDetailScreen() {
               multiline
               numberOfLines={3}
               placeholder={isAr ? 'اكتب رسالتك للمورد...' : 'Write a message to the supplier...'}
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor="#64748B"
               style={{
                 borderWidth: 1,
-                borderColor: colors.border,
+                borderColor: '#E2E8F0',
                 borderRadius: 12,
                 padding: 14,
                 fontSize: 14,
-                color: '#374151',
+                color: '#1A1A2E',
                 marginBottom: 20,
                 textAlignVertical: 'top',
                 minHeight: 80,
@@ -545,17 +545,17 @@ export default function RFQDetailScreen() {
             <View style={{flexDirection: 'row', gap: 12}}>
               <Pressable
                 onPress={() => setShowCounterModal(false)}
-                style={{flex: 1, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: colors.border, alignItems: 'center'}}
+                style={{flex: 1, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', alignItems: 'center'}}
               >
-                <Text style={{color: '#6B7280', fontWeight: '600'}}>
+                <Text style={{color: '#64748B', fontWeight: '600'}}>
                   {isAr ? 'إلغاء' : 'Cancel'}
                 </Text>
               </Pressable>
               <Pressable
                 onPress={handleSubmitCounter}
-                style={{flex: 2, padding: 14, borderRadius: 12, backgroundColor: '#192433', alignItems: 'center'}}
+                style={{flex: 2, padding: 14, borderRadius: 12, backgroundColor: '#101828', alignItems: 'center'}}
               >
-                <Text style={{color: '#FFFFFF', fontWeight: '700'}}>
+                <Text style={{color: '#FFFFFF', fontWeight: '600'}}>
                   {isAr ? 'إرسال العرض المقابل' : 'Send Counter Offer'}
                 </Text>
               </Pressable>

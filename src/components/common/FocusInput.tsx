@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+﻿import React, {useState} from 'react';
 import {Text, TextInput, TextInputProps, View} from 'react-native';
 
 interface Props extends TextInputProps {
@@ -6,32 +6,49 @@ interface Props extends TextInputProps {
   error?: string;
 }
 
-/**
- * TextInput that highlights its border blue on focus and shows
- * an optional error message below. Drop-in replacement for the
- * cheatsheet text input pattern.
- */
 export default function FocusInput({label, error, style, ...rest}: Props) {
   const [focused, setFocused] = useState(false);
 
   return (
-    <View className="mb-4">
+    <View style={{marginBottom: 14}}>
       {!!label && (
-        <Text className="text-[#1A1A2E] text-sm font-medium mb-1 ps-1">{label}</Text>
+        <Text
+          style={{
+            fontSize: 10,
+            fontWeight: '600',
+            color: '#64748B',
+            textTransform: 'uppercase',
+            letterSpacing: 0.8,
+            marginBottom: 6,
+            paddingStart: 4,
+          }}
+        >
+          {label}
+        </Text>
       )}
       <TextInput
-        className="bg-white rounded-xl h-[48px] px-4 text-[#1A1A2E] text-base"
         style={[
-          {borderWidth: 1.5, borderColor: error ? '#EF4444' : focused ? '#192433' : '#E5E7EB'},
+          {
+            backgroundColor: focused ? '#FFFAF7' : '#F8FAFC',
+            borderRadius: 12,
+            height: 48,
+            paddingHorizontal: 14,
+            fontSize: 14,
+            color: '#0F172A',
+            borderWidth: 1.5,
+            borderColor: error ? '#EF4444' : focused ? '#E67E3A' : '#E2E8F0',
+          },
           style,
         ]}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        placeholderTextColor="#9CA3AF"
+        placeholderTextColor="#bbb"
         {...rest}
       />
       {!!error && (
-        <Text className="text-[#EF4444] text-xs mt-1 ps-1">{error}</Text>
+        <Text style={{color: '#EF4444', fontSize: 11, marginTop: 4, paddingStart: 4}}>
+          {error}
+        </Text>
       )}
     </View>
   );

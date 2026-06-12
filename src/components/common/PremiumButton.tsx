@@ -1,10 +1,11 @@
-import React from 'react';
+﻿import React from 'react';
 import {
   TouchableOpacity,
   Text,
   View,
   ActivityIndicator,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import Icon from './Icon';
 import {shadows} from '../../theme/designSystem';
 
@@ -17,30 +18,6 @@ interface Props {
   disabled?: boolean;
 }
 
-const VARIANT_STYLES = {
-  primary: {
-    bg: '#192433',
-    border: '#192433',
-    text: '#FFFFFF',
-    icon: '#FFFFFF',
-    shadow: shadows.primary,
-  },
-  outline: {
-    bg: '#FFFFFF',
-    border: '#192433',
-    text: '#192433',
-    icon: '#192433',
-    shadow: shadows.sm,
-  },
-  danger: {
-    bg: '#FEF2F2',
-    border: '#FECACA',
-    text: '#B91C1C',
-    icon: '#B91C1C',
-    shadow: shadows.sm,
-  },
-};
-
 export default function PremiumButton({
   title,
   iconName,
@@ -49,50 +26,116 @@ export default function PremiumButton({
   loading = false,
   disabled = false,
 }: Props) {
-  const styles = VARIANT_STYLES[variant];
+  if (variant === 'primary') {
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        disabled={disabled || loading}
+        activeOpacity={0.85}
+        style={{opacity: disabled ? 0.5 : 1}}
+      >
+        <LinearGradient
+          colors={['#E67E3A', '#D4692E']}
+          start={{x: 0, y: 0}}
+          end={{x: 1, y: 1}}
+          style={[
+            {
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: 52,
+              borderRadius: 14,
+              paddingHorizontal: 20,
+              gap: 8,
+            },
+            shadows.md,
+          ]}
+        >
+          {loading ? (
+            <ActivityIndicator size="small" color="#ffffff" />
+          ) : (
+            <>
+              {iconName && <Icon name={iconName} size={18} color="#ffffff" />}
+              <Text style={{fontSize: 14, fontWeight: '600', color: '#ffffff', letterSpacing: 0.2}}>
+                {title}
+              </Text>
+              <View style={{marginLeft: 'auto'}}>
+                <Icon name="chevron-right" size={18} color="#ffffff" />
+              </View>
+            </>
+          )}
+        </LinearGradient>
+      </TouchableOpacity>
+    );
+  }
 
+  if (variant === 'outline') {
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        disabled={disabled || loading}
+        activeOpacity={0.8}
+        style={[
+          {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: 52,
+            borderRadius: 12,
+            borderWidth: 1.5,
+            borderColor: '#101828',
+            backgroundColor: 'transparent',
+            paddingHorizontal: 20,
+            gap: 8,
+            opacity: disabled ? 0.5 : 1,
+          },
+        ]}
+      >
+        {loading ? (
+          <ActivityIndicator size="small" color="#101828" />
+        ) : (
+          <>
+            {iconName && <Icon name={iconName} size={18} color="#101828" />}
+            <Text style={{fontSize: 13, fontWeight: '500', color: '#101828'}}>
+              {title}
+            </Text>
+          </>
+        )}
+      </TouchableOpacity>
+    );
+  }
+
+  // danger
   return (
     <TouchableOpacity
       onPress={onPress}
       disabled={disabled || loading}
-      activeOpacity={0.85}
+      activeOpacity={0.8}
       style={[
         {
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
           height: 52,
-          borderRadius: 14,
+          borderRadius: 12,
           borderWidth: 1.5,
-          backgroundColor: styles.bg,
-          borderColor: styles.border,
+          borderColor: '#FECACA',
+          backgroundColor: '#FEE2E2',
           paddingHorizontal: 20,
           gap: 8,
           opacity: disabled ? 0.5 : 1,
         },
-        styles.shadow,
+        shadows.sm,
       ]}
     >
       {loading ? (
-        <ActivityIndicator size="small" color={styles.icon} />
+        <ActivityIndicator size="small" color="#E67E3A" />
       ) : (
         <>
-          {iconName && (
-            <Icon name={iconName} size={18} color={styles.icon} />
-          )}
-          <Text
-            style={{
-              fontSize: 15,
-              fontWeight: '700',
-              color: styles.text,
-              letterSpacing: 0.3,
-            }}
-          >
+          {iconName && <Icon name={iconName} size={18} color="#E67E3A" />}
+          <Text style={{fontSize: 13, fontWeight: '500', color: '#E67E3A'}}>
             {title}
           </Text>
-          <View style={{marginLeft: 'auto'}}>
-            <Icon name="chevron-right" size={18} color={styles.icon} />
-          </View>
         </>
       )}
     </TouchableOpacity>

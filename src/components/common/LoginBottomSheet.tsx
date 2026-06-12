@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+﻿import React, {useRef, useState} from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -122,7 +122,7 @@ export default function LoginBottomSheet({isOpen, onClose, onSuccess}: Props) {
                   {/* Brand */}
                   <View style={{alignItems: 'center', marginBottom: 24}}>
                     <EjjarLogo variant="black" width={52} height={68} style={{marginBottom: 8}} />
-                    <Text style={{fontSize: 22, fontWeight: '700', color: colors.textPrimary, marginTop: 4}}>
+                    <Text style={{fontSize: 22, fontWeight: '600', color: colors.textPrimary, marginTop: 4}}>
                       {t('auth.welcome')}
                     </Text>
                     <Text style={{fontSize: 14, color: colors.textSecondary, marginTop: 4, textAlign: 'center'}}>
@@ -202,7 +202,7 @@ export default function LoginBottomSheet({isOpen, onClose, onSuccess}: Props) {
                     }}>
                       <Icon name="phone" size={26} color={colors.primary} />
                     </View>
-                    <Text style={{fontSize: 20, fontWeight: '700', color: colors.textPrimary}}>
+                    <Text style={{fontSize: 20, fontWeight: '600', color: colors.textPrimary}}>
                       {t('auth.otpLabel')}
                     </Text>
                     <Text style={{fontSize: 13, color: colors.textSecondary, marginTop: 5, textAlign: 'center'}}>
@@ -218,7 +218,7 @@ export default function LoginBottomSheet({isOpen, onClose, onSuccess}: Props) {
                         ref={el => {otpRefs.current[i] = el;}}
                         style={{
                           width: 48, height: 56, borderRadius: 12, textAlign: 'center',
-                          fontSize: 20, fontWeight: '700', color: colors.textPrimary,
+                          fontSize: 20, fontWeight: '600', color: colors.textPrimary,
                           borderWidth: 2,
                           borderColor: digit ? colors.primary : colors.border,
                           backgroundColor: digit ? colors.primaryLight : '#F8FAFC',
@@ -294,3 +294,4 @@ export default function LoginBottomSheet({isOpen, onClose, onSuccess}: Props) {
     </>
   );
 }
+

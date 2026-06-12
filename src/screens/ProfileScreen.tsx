@@ -1,6 +1,5 @@
 import React from 'react';
 import {ScrollView, Text, TouchableOpacity, View} from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -124,14 +123,14 @@ export default function ProfileScreen() {
   ];
 
   return (
-    <View style={{flex: 1, backgroundColor: colors.background}}>
+    <View style={{flex: 1, backgroundColor: '#F8FAFC'}}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{paddingBottom: 40}}>
-        {/* GRADIENT HEADER */}
-        <LinearGradient
-          colors={[colors.primary, colors.primaryDark]}
+        contentContainerStyle={{paddingBottom: 80 + insets.bottom}}>
+        {/* HEADER */}
+        <View
           style={{
+            backgroundColor: '#101828',
             paddingTop: insets.top + 16,
             paddingBottom: 48,
             paddingHorizontal: 20,
@@ -143,7 +142,7 @@ export default function ProfileScreen() {
               top: insets.top + 10,
               right: 20,
             }}>
-            <EjjarLogo variant="white" width={52} height={68} />
+            <EjjarLogo variant="white" width={30} height={48} />
           </View>
 
           {isLoggedIn && user ? (
@@ -160,14 +159,14 @@ export default function ProfileScreen() {
                   borderColor: 'rgba(255,255,255,0.4)',
                 }}>
                 <Text
-                  style={{fontSize: 28, fontWeight: '800', color: '#FFFFFF'}}>
+                  style={{fontSize: 28, fontWeight: '600', color: '#FFFFFF'}}>
                   {initials}
                 </Text>
               </View>
               <Text
                 style={{
                   fontSize: 22,
-                  fontWeight: '700',
+                  fontWeight: '600',
                   color: '#FFFFFF',
                   marginTop: 12,
                 }}>
@@ -200,14 +199,14 @@ export default function ProfileScreen() {
                   borderColor: 'rgba(255,255,255,0.4)',
                 }}>
                 <Text
-                  style={{fontSize: 28, fontWeight: '800', color: '#FFFFFF'}}>
+                  style={{fontSize: 28, fontWeight: '600', color: '#FFFFFF'}}>
                   {isAr ? 'أح' : 'AB'}
                 </Text>
               </View>
               <Text
                 style={{
                   fontSize: 22,
-                  fontWeight: '700',
+                  fontWeight: '600',
                   color: '#FFFFFF',
                   marginTop: 12,
                 }}>
@@ -272,7 +271,7 @@ export default function ProfileScreen() {
               </TouchableOpacity>
             </View>
           )}
-        </LinearGradient>
+        </View>
 
         {/* QUICK STATS */}
         <View
@@ -288,11 +287,13 @@ export default function ProfileScreen() {
               style={[
                 {
                   flex: 1,
-                  backgroundColor: colors.card,
+                  backgroundColor: '#FFFFFF',
                   borderRadius: 16,
                   padding: 12,
                   alignItems: 'center',
                   gap: 4,
+                  borderWidth: 1,
+                  borderColor: '#E2E8F0',
                 },
                 shadows.md,
               ]}>
@@ -310,7 +311,7 @@ export default function ProfileScreen() {
               <Text
                 style={{
                   fontSize: 18,
-                  fontWeight: '800',
+                  fontWeight: '600',
                   color: colors.textPrimary,
                 }}>
                 {stat.value}
@@ -331,11 +332,13 @@ export default function ProfileScreen() {
         <View
           style={[
             {
-              backgroundColor: colors.card,
+              backgroundColor: '#FFFFFF',
               borderRadius: 20,
               marginHorizontal: 16,
               marginTop: 16,
               padding: 16,
+              borderWidth: 1,
+              borderColor: '#E2E8F0',
             },
             shadows.sm,
           ]}>
@@ -378,14 +381,14 @@ export default function ProfileScreen() {
                   currentLanguage === 'en' ? colors.primary : '#F8FAFC',
                 borderWidth: 1.5,
                 borderColor:
-                  currentLanguage === 'en' ? colors.primary : colors.border,
+                  currentLanguage === 'en' ? colors.primary : '#E2E8F0',
               }}
               onPress={() => setLanguage('en')}
               activeOpacity={0.8}>
               <Text
                 style={{
                   fontSize: 16,
-                  fontWeight: '700',
+                  fontWeight: '600',
                   color:
                     currentLanguage === 'en' ? '#FFFFFF' : colors.textPrimary,
                 }}>
@@ -414,14 +417,14 @@ export default function ProfileScreen() {
                   currentLanguage === 'ar' ? colors.primary : '#F8FAFC',
                 borderWidth: 1.5,
                 borderColor:
-                  currentLanguage === 'ar' ? colors.primary : colors.border,
+                  currentLanguage === 'ar' ? colors.primary : '#E2E8F0',
               }}
               onPress={() => setLanguage('ar')}
               activeOpacity={0.8}>
               <Text
                 style={{
                   fontSize: 16,
-                  fontWeight: '700',
+                  fontWeight: '600',
                   color:
                     currentLanguage === 'ar' ? '#FFFFFF' : colors.textPrimary,
                 }}>
@@ -446,11 +449,13 @@ export default function ProfileScreen() {
         <View
           style={[
             {
-              backgroundColor: colors.card,
+              backgroundColor: '#FFFFFF',
               borderRadius: 20,
               marginHorizontal: 16,
               marginTop: 16,
               overflow: 'hidden',
+              borderWidth: 1,
+              borderColor: '#E2E8F0',
             },
             shadows.sm,
           ]}>
@@ -462,7 +467,7 @@ export default function ProfileScreen() {
                 flexDirection: 'row',
                 alignItems: 'center',
                 borderBottomWidth: idx < MENU_ITEMS.length - 1 ? 1 : 0,
-                borderBottomColor: '#F8FAFC',
+                borderBottomColor: '#E2E8F0',
               }}
               activeOpacity={0.7}
               onPress={item.onPress}>

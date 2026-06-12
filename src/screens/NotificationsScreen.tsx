@@ -74,14 +74,13 @@ const NOTIF_ICON: Record<string, {iconName: string; bg: string; color: string}> 
   quote:       {iconName: 'cash-multiple',        bg: colors.primaryLight,  color: colors.primary},
   negotiation: {iconName: 'swap-horizontal',      bg: colors.warningLight,  color: colors.warning},
   job:         {iconName: 'briefcase-check',      bg: '#DCFCE7',            color: colors.success},
-  rfq:         {iconName: 'bullhorn',             bg: '#EDE9FE',            color: '#7C3AED'},
+  rfq:         {iconName: 'bullhorn',             bg: '#E0F2FE',            color: '#0369A1'},
 };
 
 function SkeletonItem() {
   const bg = '#E2E8F0';
   return (
-    <View style={{backgroundColor: colors.card, borderRadius: 16, marginBottom: 8, padding: 14, flexDirection: 'row', alignItems: 'center'}}>
-      <View style={{width: 4, height: 48, borderRadius: 2, backgroundColor: bg, marginRight: 12}} />
+    <View style={{backgroundColor: '#FFFFFF', borderRadius: 16, marginBottom: 8, padding: 14, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#E2E8F0'}}>
       <View style={{width: 48, height: 48, borderRadius: 12, backgroundColor: bg, marginRight: 12}} />
       <View style={{flex: 1, gap: 6}}>
         <View style={{width: '60%', height: 13, borderRadius: 4, backgroundColor: bg}} />
@@ -146,19 +145,13 @@ export default function NotificationsScreen() {
     return (
       <TouchableOpacity
         style={[{
-          backgroundColor: colors.card, borderRadius: 16, marginBottom: 8,
+          backgroundColor: '#FFFFFF', borderRadius: 16, marginBottom: 8,
           flexDirection: 'row', alignItems: 'flex-start', overflow: 'hidden',
+          borderWidth: 1, borderColor: '#E2E8F0',
         }, shadows.sm]}
         activeOpacity={0.8}
         onPress={() => handleTap(item)}
       >
-        {/* Unread indicator bar */}
-        <View style={{
-          width: 4, alignSelf: 'stretch',
-          backgroundColor: isRead ? 'transparent' : colors.primary,
-          borderTopLeftRadius: 16, borderBottomLeftRadius: 16,
-        }} />
-
         <View style={{flex: 1, flexDirection: 'row', alignItems: 'flex-start', padding: 14}}>
           {/* Icon circle */}
           <View style={{
@@ -172,7 +165,7 @@ export default function NotificationsScreen() {
           {/* Content */}
           <View style={{flex: 1}}>
             <Text
-              style={{fontSize: 14, color: colors.textPrimary, fontWeight: isRead ? '400' : '700'}}
+              style={{fontSize: 14, color: colors.textPrimary, fontWeight: isRead ? '400' : '600'}}
               numberOfLines={1}
             >
               {isAr ? item.titleAr : item.titleEn}
@@ -206,7 +199,7 @@ export default function NotificationsScreen() {
       }}>
         <Icon name="bell-sleep-outline" size={36} color={colors.primary} />
       </View>
-      <Text style={{fontSize: 17, fontWeight: '700', color: colors.textPrimary}}>
+      <Text style={{fontSize: 17, fontWeight: '600', color: colors.textPrimary}}>
         {t('notifications.empty')}
       </Text>
       <Text style={{fontSize: 14, color: colors.textSecondary, marginTop: 6}}>
@@ -216,7 +209,7 @@ export default function NotificationsScreen() {
   );
 
   return (
-    <View style={{flex: 1, backgroundColor: colors.background}}>
+    <View style={{flex: 1, backgroundColor: '#F8FAFC'}}>
       {/* HEADER */}
       <View style={[{
         backgroundColor: colors.card,
@@ -225,7 +218,7 @@ export default function NotificationsScreen() {
       }, shadows.sm]}>
         <View style={{flex: 1}}>
           <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
-            <Text style={{fontSize: 20, fontWeight: '700', color: colors.textPrimary}}>
+            <Text style={{fontSize: 20, fontWeight: '600', color: colors.textPrimary}}>
               {t('notifications.title')}
             </Text>
             {unreadCount > 0 && (
@@ -233,7 +226,7 @@ export default function NotificationsScreen() {
                 backgroundColor: colors.error, borderRadius: 10,
                 paddingHorizontal: 7, paddingVertical: 2,
               }}>
-                <Text style={{fontSize: 11, fontWeight: '700', color: '#FFFFFF'}}>
+                <Text style={{fontSize: 11, fontWeight: '600', color: '#FFFFFF'}}>
                   {unreadCount}
                 </Text>
               </View>
@@ -254,7 +247,7 @@ export default function NotificationsScreen() {
       </View>
 
       {/* FILTER CHIPS */}
-      <View style={{backgroundColor: colors.card, borderBottomWidth: 1, borderBottomColor: colors.border}}>
+      <View style={{backgroundColor: colors.card, borderBottomWidth: 1, borderBottomColor: '#E2E8F0'}}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -271,7 +264,7 @@ export default function NotificationsScreen() {
                   borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7,
                   backgroundColor: isActive ? colors.primary : '#F8FAFC',
                   borderWidth: 1,
-                  borderColor: isActive ? colors.primary : colors.border,
+                  borderColor: isActive ? colors.primary : '#E2E8F0',
                 }}
                 activeOpacity={0.8}
               >
@@ -316,3 +309,5 @@ export default function NotificationsScreen() {
     </View>
   );
 }
+
+

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { View, Text, TouchableOpacity, Modal } from 'react-native';
 import Icon from '@react-native-vector-icons/material-design-icons';
 import { useTranslation } from 'react-i18next';
@@ -38,18 +38,18 @@ export default function DemoTooltip({
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#EBF1FF', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4 }}>
               <Icon name="play-circle" size={16} color="#192433" />
-              <Text style={{ fontSize: 11, fontWeight: '700', color: '#192433', marginLeft: 4 }}>{t('tour.ui.label')}</Text>
+              <Text style={{ fontSize: 11, fontWeight: '600', color: '#101828', marginLeft: 4 }}>{t('tour.ui.label')}</Text>
             </View>
             <Text style={{ fontSize: 12, color: '#6B7280' }}>{t('tour.ui.stepOf', { current: stepNumber, total: totalSteps })}</Text>
           </View>
 
           {/* Progress bar */}
           <View style={{ height: 4, backgroundColor: '#F1F5F9', borderRadius: 2, marginBottom: 20, overflow: 'hidden' }}>
-            <View style={{ height: 4, backgroundColor: '#192433', borderRadius: 2, width: `${(stepNumber / totalSteps) * 100}%` }} />
+            <View style={{ height: 4, backgroundColor: '#101828', borderRadius: 2, width: `${(stepNumber / totalSteps) * 100}%` }} />
           </View>
 
           {/* Title */}
-          <Text style={{ fontSize: 18, fontWeight: '700', color: '#1A1A2E', marginBottom: 8 }}>{title}</Text>
+          <Text style={{ fontSize: 18, fontWeight: '600', color: '#1A1A2E', marginBottom: 8 }}>{title}</Text>
 
           {/* Description */}
           <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 22, marginBottom: 24 }}>{description}</Text>
@@ -65,12 +65,12 @@ export default function DemoTooltip({
             <TouchableOpacity
               onPress={onNext}
               style={{
-                flex: 1, backgroundColor: '#192433', borderRadius: 12, paddingVertical: 12,
+                flex: 1, backgroundColor: '#101828', borderRadius: 12, paddingVertical: 12,
                 flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-                shadowColor: '#192433', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6,
+                shadowColor: '#101828', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6,
               }}
             >
-              <Text style={{ color: '#fff', fontWeight: '700', marginRight: 4 }}>
+              <Text style={{ color: '#fff', fontWeight: '600', marginRight: 4 }}>
                 {stepNumber === totalSteps ? t('tour.ui.finish') : t('tour.ui.next')}
               </Text>
               <Icon name="arrow-right" size={18} color="white" />
@@ -81,3 +81,4 @@ export default function DemoTooltip({
     </Modal>
   );
 }
+

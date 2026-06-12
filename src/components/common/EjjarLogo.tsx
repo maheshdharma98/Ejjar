@@ -8,7 +8,7 @@ type Props = {
   style?: StyleProp<ImageStyle>;
 };
 
-const WHITE = require('../../assets/Ejjar_logo_white.png');
+const WHITE = require('../../assets/logo_white.png');
 const BLACK = require('../../assets/logo_black.png');
 
 export default function EjjarLogo({

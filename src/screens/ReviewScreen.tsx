@@ -120,11 +120,11 @@ export default function ReviewScreen() {
   const canSubmit = rating > 0 && reviewText.trim().length >= 20;
 
   return (
-    <View style={{flex: 1, backgroundColor: colors.background}}>
+    <View style={{flex: 1, backgroundColor: '#F8FAFC'}}>
       <KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         {/* HEADER */}
         <View style={[{
-          backgroundColor: colors.card,
+          backgroundColor: '#101828',
           paddingTop: insets.top + 12, paddingBottom: 12, paddingHorizontal: 16,
           flexDirection: 'row', alignItems: 'center',
         }, shadows.sm]}>
@@ -135,10 +135,10 @@ export default function ReviewScreen() {
             activeOpacity={0.7}
           >
             <View style={{transform: [{scaleX: I18nManager.isRTL ? -1 : 1}]}}>
-              <Icon name="arrow-left" size={24} color={colors.primary} />
+              <Icon name="arrow-left" size={24} color="#E67E3A" />
             </View>
           </TouchableOpacity>
-          <Text style={{fontSize: 18, fontWeight: '700', color: colors.textPrimary, flex: 1}}>
+          <Text style={{fontSize: 18, fontWeight: '600', color: '#FFFFFF', flex: 1}}>
             {t('review.title')}
           </Text>
         </View>
@@ -149,13 +149,14 @@ export default function ReviewScreen() {
         >
           {/* SUPPLIER CARD */}
           <View style={[{
-            backgroundColor: colors.card, borderRadius: 20,
+            backgroundColor: '#FFFFFF', borderRadius: 20,
+            borderWidth: 1, borderColor: '#E2E8F0',
             marginHorizontal: 16, marginTop: 16, padding: 16,
             flexDirection: 'row', alignItems: 'center', gap: 12,
           }, shadows.md]}>
             <CategoryIcon category={category} size={28} withBackground />
             <View style={{flex: 1}}>
-              <Text style={{fontSize: 15, fontWeight: '700', color: colors.textPrimary}} numberOfLines={1}>
+              <Text style={{fontSize: 15, fontWeight: '600', color: colors.textPrimary}} numberOfLines={1}>
                 {displayName}
               </Text>
               <Text style={{fontSize: 12, color: colors.textSecondary, marginTop: 2}}>
@@ -175,7 +176,8 @@ export default function ReviewScreen() {
 
           {/* STAR RATING */}
           <View style={[{
-            backgroundColor: colors.card, borderRadius: 20,
+            backgroundColor: '#FFFFFF', borderRadius: 20,
+            borderWidth: 1, borderColor: '#E2E8F0',
             marginHorizontal: 16, marginTop: 12, padding: 20,
             alignItems: 'center',
           }, shadows.sm]}>
@@ -212,7 +214,8 @@ export default function ReviewScreen() {
 
           {/* TAGS */}
           <View style={[{
-            backgroundColor: colors.card, borderRadius: 20,
+            backgroundColor: '#FFFFFF', borderRadius: 20,
+            borderWidth: 1, borderColor: '#E2E8F0',
             marginHorizontal: 16, marginTop: 12, padding: 16,
           }, shadows.sm]}>
             <Text style={{fontSize: 14, fontWeight: '600', color: colors.textPrimary, marginBottom: 12}}>
@@ -230,7 +233,7 @@ export default function ReviewScreen() {
                       borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7,
                       backgroundColor: isSelected ? colors.primaryLight : '#F8FAFC',
                       borderWidth: 1.5,
-                      borderColor: isSelected ? colors.primary : colors.border,
+                      borderColor: isSelected ? colors.primary : '#E2E8F0',
                     }}
                     activeOpacity={0.7}
                   >
@@ -251,9 +254,9 @@ export default function ReviewScreen() {
           <View style={{marginHorizontal: 16, marginTop: 12}}>
             <TextInput
               style={[{
-                backgroundColor: colors.card, borderRadius: 16,
+                backgroundColor: '#FFFFFF', borderRadius: 16,
                 borderWidth: 1.5,
-                borderColor: errors.text ? colors.error : colors.border,
+                borderColor: errors.text ? colors.error : '#E2E8F0',
                 padding: 14, fontSize: 14, color: colors.textPrimary,
                 minHeight: 120, textAlignVertical: 'top',
               }, shadows.sm]}
@@ -276,7 +279,8 @@ export default function ReviewScreen() {
 
           {/* PHOTOS */}
           <View style={[{
-            backgroundColor: colors.card, borderRadius: 20,
+            backgroundColor: '#FFFFFF', borderRadius: 20,
+            borderWidth: 1, borderColor: '#E2E8F0',
             marginHorizontal: 16, marginTop: 12, padding: 16,
           }, shadows.sm]}>
             <Text style={{fontSize: 14, fontWeight: '600', color: colors.textPrimary, marginBottom: 12}}>
@@ -293,7 +297,7 @@ export default function ReviewScreen() {
                       flex: 1, aspectRatio: 1, borderRadius: 14,
                       alignItems: 'center', justifyContent: 'center',
                       borderWidth: 2, borderStyle: 'dashed',
-                      borderColor: selected ? colors.primary : colors.border,
+                      borderColor: selected ? colors.primary : '#E2E8F0',
                       backgroundColor: selected ? colors.primaryLight : '#F8FAFC',
                     }}
                     activeOpacity={0.7}
@@ -350,3 +354,5 @@ export default function ReviewScreen() {
     </View>
   );
 }
+
+
