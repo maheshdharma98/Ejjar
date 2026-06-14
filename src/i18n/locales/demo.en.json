@@ -152,6 +152,14 @@
       "title": "Step 13: Job Confirmed",
       "description": "Once both parties confirm, contact details are unmasked. The contractor now sees the supplier's real name and phone number. Job creation begins."
     },
+    "job_tracking": {
+      "title": "Step 14: Track Your Job",
+      "description": "The job appears in your Jobs tab with live milestone tracking. Monitor progress, completion percentage, and supplier contact details — all in one place."
+    },
+    "job_completed": {
+      "title": "Step 15: Mark Complete",
+      "description": "Once the work is done, tap 'Mark as Complete'. Both parties confirm, the job closes, and you can now leave a review for the supplier."
+    },
     "review_screen": {
       "title": "Step 16: Leave Review",
       "description": "Contractor rates the supplier 1–5 stars with comments and photos. Reviews are public and help future contractors choose reliable suppliers."

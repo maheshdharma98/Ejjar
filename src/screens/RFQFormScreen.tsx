@@ -26,7 +26,6 @@ import type {Category, Subcategory} from '../../../shared/types/demo';
 import {useDemoStore} from '../store/demoStore';
 import DemoTooltip from '../components/common/DemoTooltip';
 import DemoFloatingBar from '../components/common/DemoFloatingBar';
-import {useToastStore} from '../store/toastStore';
 import {colors, shadows} from '../theme/designSystem';
 import SectionHeader from '../components/common/SectionHeader';
 import PremiumButton from '../components/common/PremiumButton';
@@ -227,7 +226,6 @@ export default function RFQFormScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
-  const {showToast} = useToastStore();
   const {isActive, currentStep, nextStep} = useDemoStore();
 
   const {category, params} = route.params;
@@ -236,7 +234,7 @@ export default function RFQFormScreen() {
   const subcategoryId = ((params?.subcategoryId as string) ?? (params?.subcategory as string) ?? '') as Subcategory | '';
   const isDemoRFQMode = !!subcategoryId;
 
-  const {createRFQ, currentUserId, getSuppliersBySubcategory} = useDemoData();
+  const {createRFQ, currentUserId, getSuppliersBySubcategory, getSuppliersByCategory} = useDemoData();
 
   const initDescription = isDemoRFQMode
     ? `${t(`demo:subcategories.${subcategoryId}`)} — ${t('rfq.description')}`
@@ -319,36 +317,36 @@ export default function RFQFormScreen() {
     if (isActive) { nextStep(); return; }
     if (!validate()) return;
 
-    if (isDemoRFQMode && subcategoryId) {
-      setIsBroadcasting(true);
-      setTimeout(() => {
-        const matchedSuppliers = getSuppliersBySubcategory(subcategoryId);
-        createRFQ({
-          contractorId: currentUserId,
-          category: category as Category,
-          subcategory: subcategoryId,
-          title: `${subcategoryId} request`,
-          titleAr: `طلب ${t(`demo:subcategories.${subcategoryId}`)}`,
-          description: description.trim(),
-          descriptionAr: description.trim(),
-          city: city || 'Muscat',
-          cityAr: city || 'مسقط',
-          budget: {min: 0, max: 1000, currency: 'OMR'},
-          startDate: dateFrom ? dateFrom.toISOString() : new Date().toISOString(),
-          duration: 'daily',
-          durationAr: 'يومي',
-          status: 'broadcasted',
-          broadcastedTo: matchedSuppliers.map(s => s.id),
-        });
-        setIsBroadcasting(false);
-        showToast(t('rfq.sent'), 'success');
-        navigation.navigate('MyRFQs');
-      }, 2200);
-      return;
-    }
-
-    showToast(t('rfq.sent'), 'success');
-    navigation.navigate('RFQDetail', {rfqId: 'rfq-002'});
+    setIsBroadcasting(true);
+    setTimeout(() => {
+      const matchedSuppliers = subcategoryId
+        ? getSuppliersBySubcategory(subcategoryId)
+        : getSuppliersByCategory(category as Category);
+      const title = mpRoleLabel || mchTypeLabel || vehTypeLabel || shpTypeLabel || category;
+      const newRFQ = createRFQ({
+        contractorId: currentUserId,
+        category: category as Category,
+        subcategory: (subcategoryId || category) as Subcategory,
+        title: `${title} request`,
+        titleAr: `طلب ${title}`,
+        description: description.trim() || `${title} services needed`,
+        descriptionAr: description.trim() || `خدمات ${title} مطلوبة`,
+        city: city || 'Muscat',
+        cityAr: city || 'مسقط',
+        budget: {min: 0, max: 1000, currency: 'OMR'},
+        startDate: dateFrom ? dateFrom.toISOString() : new Date().toISOString(),
+        duration: 'daily',
+        durationAr: 'يومي',
+        status: 'broadcasted',
+        broadcastedTo: matchedSuppliers.map(s => s.id),
+      });
+      setIsBroadcasting(false);
+      navigation.navigate('RFQBroadcast', {
+        rfqId: newRFQ.id,
+        supplierCount: matchedSuppliers.length,
+        city: city || 'Muscat',
+      });
+    }, 2200);
   };
 
   // suppress unused variable warnings
@@ -925,7 +923,7 @@ export default function RFQFormScreen() {
         description={tDemo('tour.rfq_submitted.description')}
         onNext={() => {
           nextStep();
-          navigation.navigate('RFQDetail', {rfqId: 'rfq-002'});
+          navigation.navigate('RFQDetail', {rfqId: 'RFQ_DEMO_001'});
         }}
       />
 

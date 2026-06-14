@@ -5,6 +5,9 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {RouteProp} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
+import {useDemoStore} from '../store/demoStore';
+import DemoTooltip from '../components/common/DemoTooltip';
+import DemoFloatingBar from '../components/common/DemoFloatingBar';
 
 import type {RootStackParamList} from '../navigation/RootNavigator';
 import {useDemoData} from '../store/demoDataStore';
@@ -37,11 +40,13 @@ const getJobStatusConfig = (status: string) => {
 
 export default function JobTrackingScreen() {
   const {i18n} = useTranslation();
+  const {t: tDemo} = useTranslation('demo');
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
   const {showToast} = useToastStore();
   const isAr = i18n.language === 'ar';
+  const {isActive, currentStep, nextStep} = useDemoStore();
 
   const {jobId} = route.params;
   const jobs = useDemoData(s => s.jobs);
@@ -453,6 +458,27 @@ export default function JobTrackingScreen() {
           </TouchableOpacity>
         </View>
       )}
+
+      {/* DEMO TOOLTIPS */}
+      <DemoTooltip
+        visible={isActive && currentStep === 'job_tracking'}
+        stepNumber={15} totalSteps={18}
+        title={tDemo('tour.job_tracking.title')}
+        description={tDemo('tour.job_tracking.description')}
+        onNext={nextStep}
+      />
+      <DemoTooltip
+        visible={isActive && currentStep === 'job_completed'}
+        stepNumber={16} totalSteps={18}
+        title={tDemo('tour.job_completed.title')}
+        description={tDemo('tour.job_completed.description')}
+        onNext={() => {
+          nextStep();
+          navigation.navigate('Review', {jobId: 'JOB_001', supplierId: 'S001'});
+        }}
+      />
+
+      <DemoFloatingBar />
     </View>
   );
 }

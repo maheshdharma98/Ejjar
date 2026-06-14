@@ -23,6 +23,7 @@ interface DemoDataState {
 
   createRFQ: (rfq: Omit<RFQ, 'id' | 'createdAt' | 'updatedAt' | 'quotes'>) => RFQ;
   addQuoteToRFQ: (rfqId: string, quote: Omit<QuoteMessage, 'id' | 'timestamp'>) => void;
+  updateRFQStatus: (rfqId: string, status: RFQ['status']) => void;
   acceptQuote: (rfqId: string, quoteId: string) => Job | null;
   rejectQuote: (rfqId: string, quoteId: string) => void;
 
@@ -108,10 +109,26 @@ export const useDemoData = create<DemoDataState>((set, get) => ({
       timestamp: new Date().toISOString(),
     };
     set(state => ({
+      rfqs: state.rfqs.map(r => {
+        if (r.id !== rfqId) return r;
+        const newStatus: RFQ['status'] =
+          quoteInput.fromRole === 'contractor' ? 'negotiating' :
+          r.status === 'broadcasted' || r.status === 'draft' ? 'receiving_quotes' :
+          r.status;
+        return {
+          ...r,
+          quotes: [...r.quotes, newQuote],
+          status: newStatus,
+          updatedAt: new Date().toISOString(),
+        };
+      }),
+    }));
+  },
+
+  updateRFQStatus: (rfqId, status) => {
+    set(state => ({
       rfqs: state.rfqs.map(r =>
-        r.id === rfqId
-          ? { ...r, quotes: [...r.quotes, newQuote], updatedAt: new Date().toISOString() }
-          : r,
+        r.id === rfqId ? { ...r, status, updatedAt: new Date().toISOString() } : r,
       ),
     }));
   },
